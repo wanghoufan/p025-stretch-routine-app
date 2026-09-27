@@ -54,7 +54,9 @@
    - 代码：`src/features/actions/services/actionGroups.ts`、`components/ActionFilterBar.tsx`、`screens/ActionLibraryScreen.tsx` + 两份测试改造。
    - 质量：全量 **35 suites / 258 tests 绿**，`npm run typecheck` 0 错；code-reviewer 两轮过、qa 真机两轮 PASS（xagapro / Expo Go）、supervisor 复检放行（P0=0 / blocking P1=0）。
    - 证据：计划 `docs/pm/PLAN-TASK-018-library-dynamic-filter.md`；复核 `docs/review/CODE_REVIEW-task018-dynamic-filter.md`（含 Round 2）；QA `docs/qa/task018-dynamic-filter.md`（含复验轮）。
-7. **本次大交接**：neat-freak 文档对齐与清理完成；全部产出**已按用户指令提交并推 `main`**。
+7. **多语言**（2026-09-27，commit `4be0428` / `c2393af`）：中英文切换、立即生效、持久化，启动自动跟随系统语言。纯 JS 运行时（`src/shared/i18n.ts` + `LanguageContext.tsx`），未引入 `expo-localization`，app.json 无需 locales 配置。
+8. **TASK-020 启动画面换肤**：见下方「启动画面换肤（2026-09-27）」。
+9. **本次大交接**：neat-freak 文档对齐与清理完成；全部产出**已按用户指令提交并推 `main`**。
 
 ### 1.3 明确未做（别误以为做了）
 
@@ -104,13 +106,17 @@
 |---|---|---|
 | task-manager | 开窗口时定 | 本窗口 |
 | supervisor | opencode-go/muse-spark-1.3-contributor | opencode 直调 |
-| builder | opencode-go/deepseek-v4.1-flash | opencode 直调（`opencode run -m … --auto`） |
-| planner | codex/gpt-5.6-sol | codex 直调 |
-| code-reviewer | opencode/muse-spark-1.3-contributor-free | 本窗口 subagent |
-| qa | codex/gpt-5.6-luna | 本窗口直派；adb/Expo 走本窗口 bash |
-| product-reviewer | codex/gpt-5.6-terra | codex 直调 |
-| experience-recorder / neat-freak | opencode/muse-spark-1.3-contributor-free | 本窗口 subagent |
-| senior-expert | codex/gpt-5.6-sol | codex 直调（只接升级任务） |
+| builder | codebuddy/deepseek-v4.1-flash | codebuddy 直调（`codebuddy --model deepseek-v4.1-flash --effort high -y -p`） |
+| planner | codex/gpt-6-sol | codex 直调（`codex exec -m "gpt-6-sol" --skip-git-repo-check`） |
+| code-reviewer | codebuddy/glm-5.3-flash | codebuddy 直调（同 builder 通道，换 model） |
+| qa | codex/gpt-6-luna | 普通 QA 走 codex 直调（`-s danger-full-access`，仅 QA）；**真机 QA（adb/Expo）走本窗口 bash 直驱**，note 记分支 |
+| product-reviewer | opencode/muse-spark-1.3-contributor-free | 本窗口 subagent |
+| experience-recorder | opencode-go/space-bunny-free | opencode 直调 |
+| neat-freak | volcengine-plan/ark-code-latest | opencode 直调 |
+| senior-expert | codex/gpt-6-sol | codex 直调（只接升级任务） |
+| db-admin | volcengine-plan/ark-code-latest | opencode 直调（专项，TM 直派直收） |
+
+> 本表为 T22（2026-09-27）实派快照，与根 `USER_MODEL_OVERRIDE.md` 一致；**冲突时以 override 表为准**，改表按 override 规矩（改表→真调→记账）。
 
 - 表定通道的角色**必须走通道直调，禁套娃**成本窗口 subagent。
 - 返工必须**续原 session**（opencode 用 `-c`）；同一 Task 累计被 supervisor 打回 2 次自动升 senior-expert，senior 再被打回 2 次即停线找人。
@@ -174,3 +180,15 @@
 - Picker总数+分组筛选、Routine分组选择+自定义分组、设置页测试语音按钮三处改动，随release包真机验收通过（jest 36套件/263用例全绿）
 - 真机无声根因：speaker音量0＋sherpa引擎无中文包（切mibrain）＋投屏/录屏劫持remote_submix；均设备侧修复，无业务代码改动
 - 当前手机上为release包（离线独立运行）；CHANGE_REQUEST：NONE
+
+---
+
+## 启动画面换肤（2026-09-27，TASK-020，CHANGE_REQUEST: B，全链放行）
+
+- **起因**：用户指出 App 启动画面还是 Expo 默认框架。根因查实——`assets/splash-icon.png` 是 Expo 模板自带的「网格+同心圆靶心」图，且 `android/` 是 prebuild 产物、`splashscreen_background` 仍残留 `#FFFFFF`，app.json 的 splash 改动从未同步进原生。
+- **做法**：接入 SDK 内置的 `expo-splash-screen@~57.0.9`（`node_modules/expo/bundledNativeModules.json` 锁定版本，非第三方新依赖），把它作为 app.json `plugins` 让 app.json 成为唯一真源，再 `npx expo prebuild -p android` 同步原生。启动画面换用品牌图 `assets/motion-core-icon.png`，底色 `#041B3D`，`imageWidth: 100`（100dp 方图半对角线 70.7dp < 96dp 圆形遮罩半径，不会被切角）。Android 12+ 靠 androidx core-splashscreen 的平台属性转发生效，不需手写 `values-v31`。
+- **防闪烁**：`preventAutoHideAsync` 放模块作用域不 await（挂住原生 splash 到本地 DB 初始化完成），`hideAsync` 在 `boot.status` 离开 loading 后 rAF 调用，**错误分支也放行**（否则初始化失败会被 splash 永久盖死）。App.tsx boot 屏与原生 splash 同图源、同 100dp、同居中，过渡帧证实图标原位淡出、无跳变。
+- **真机验收**：xagapro(API31) / ruby(API34) / pearl(API35) 三台覆盖安装成功（**全程未卸载，用户数据零丢失**），逐帧录屏 + PIL 像素统计取证：主内容区全程 `#041B3D`，**纯白帧 0、纯黑帧 0**。冷启动 526ms。报告 `docs/qa/task020-brand-splash.md`。
+- **顺手修掉的既有 P1**：`app.json` `versionCode` 2→3。此前有人手改未跟踪的 `android/app/build.gradle` 为 3 未回写真源，prebuild 又重置为 2，导致装机一律 `INSTALL_FAILED_VERSION_DOWNGRADE`（`-d` 也不放行）。口径已落 `docs/sop/android.md` §5.1。
+- **挂账非阻塞**：①`app.json` 顶层 `splash` 与插件 props 双写（权威源＝插件 props，口径同落 §5.1）；②`assets/splash-icon.png`（17KB Expo 靶心图）已成零引用孤儿文件，仍会被 `assets/**/*` 打进包，可择机清；③splash 期间底部系统导航栏约 130ms 为纯黑（Android 12+ 固有行为）；④「Motion Core 拉伸」字样因 DB 初始化 <100ms 未被看到，**要不要加 splash 最短显示时长属观感决策，未擅自加**；⑤splash 图标自带浅蓝圆角方块底，在深蓝上可见方形边界（素材级微调）。
+- **出包铁律（新增）**：`android/` 已存在时 `expo run:android` 不重跑 prebuild（2026-09-21 图标修复已踩过同坑），**出包前必须先 `npx expo prebuild --platform android` 再 gradle**，否则按旧 versionCode 打包并误判成"修复没生效"。
