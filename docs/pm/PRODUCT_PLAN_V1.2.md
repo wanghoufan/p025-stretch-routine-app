@@ -1,5 +1,7 @@
 # PRODUCT_PLAN（Phase1 专用；Readiness 定义唯一正典，卡内引用不重写）
 
+> 【neat-freak 2026-09-27 补注｜仅加指针，正文与历史结论未动】本计划已被 `PRODUCT_PLAN_V1.3` **局部取代**（历史统计排除条款，对应本文 `:36`／`:68`／`:154` 三处，取代明细见 V1.3「Functional Scope」前三条）；其余不冲突条款继续有效。本文作为历史基线封存；其中 JDK／EAS 构建环境等过期叙述已由 V1.3「Technical Approach · V1.2 过期环境叙述逐项更正」逐项更正，现状以 HANDOFF 为准。
+
 - Plan Version：PRODUCT_PLAN_V1.2（V1.0 已实现后的 V1.1 Release Hardening 增量计划；代码基线 `main@bc1f39f041cfa4a71696534ed86aee25c44d09d1`）
 - PROJECT_PHASE：PLAN
 - Product Goal：保留 V1.0 已完成的拉伸流程产品与数据，在不重做整套业务功能的前提下，把 Android 计时、活动会话、后台/锁屏播报、停止恢复和迁移行为加固到可验证、可恢复、不会静默覆盖用户会话的 V1.1。

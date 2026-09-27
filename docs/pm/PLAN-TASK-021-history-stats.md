@@ -1,5 +1,7 @@
 # PLAN｜TASK-021 历史统计（Round 3 收口，待 Research Reviewer 复审）
 
+> 【neat-freak 2026-09-27 补注｜仅加收工状态指针，正文按写作时快照保留】本卡规划已**全部落地并放行**：`PRODUCT_PLAN_V1.3` 已建立并成为 `DEV_BASELINE`（取代本卡过渡口径「DEV_BASELINE 仍为 V1.2」）；Task Breakdown 各项全部完成——R006 PASS → B1～B4＋F1 → 真机 QA 两轮全过 → supervisor 复检放行（见 HANDOFF「TASK-021 历史统计功能」章节与 `docs/qa/task021-真机第一轮.md`、`docs/qa/task021-r006.md`）。真机验收设备以 **Redmi Note 12 Pro（`indq5xfi6hovay4d`）** 为准，正文中的 xagapro 为写作时旧口径；种子「既存同名不赋型」口径已被 F1 收窄（存量回填允许名字匹配，见 V1.3 实施补注）。
+
 - DEV_BASELINE：当前仍为 `PRODUCT_PLAN_V1.2`；本卡不是新基线。
 - CHANGE_REQUEST：**C**。
 - PROJECT_PHASE：`PLAN_REOPEN_REQUIRED`（HANDOFF 已由 TM 登记）。

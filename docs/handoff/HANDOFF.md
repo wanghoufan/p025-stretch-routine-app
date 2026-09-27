@@ -25,7 +25,7 @@
     - P3-3 场景组头 `minHeight=44` < 48（HEAD 既有问题）
     - P3-4 清除筛选用例未断言搜索框清空；`DEFAULT_ACTION_FILTERS` 为共享常量对象
   - V1.0 遗留：P1-1（后台到期 cue 不补播）转 V1.1 R025–R028 实测；P1-2 已确认符合 US7 保持现状；QA 的 WAVE1-SEED-001 已 CLOSED
-- docs 落盘清单（累计，按目录）：`docs/handoff/HANDOFF.md`；`docs/pm/` PRODUCT_PLAN_V1.1 + V1.2 + PLAN-TASK-018-library-dynamic-filter；`docs/review/` RESEARCH_REVIEW-V1.1-R1 + V1.2-R2 + CODE_REVIEW-2026-09-17 + -2026-09-18-seed + v11-wave1 + seed-repair + v11-ambient-seedv2 + library-filter + light-music + task018-dynamic-filter；`docs/qa/` v1.1-baseline + v11-wave1-functional + v11-filter-ambient + android-v1-silent-install + android-background-spike + android-tts-spike + task018-dynamic-filter；`docs/model/` TASK-MODEL-LOG + DISPATCH-LOG
+- docs 落盘清单（累计，按目录）：`docs/handoff/HANDOFF.md`；`docs/pm/` PRODUCT_PLAN_V1.1 + V1.2 + V1.3 + PLAN-TASK-018-library-dynamic-filter + PLAN-TASK-021-history-stats；`docs/review/` RESEARCH_REVIEW-V1.1-R1 + V1.2-R2 + CODE_REVIEW-2026-09-17 + -2026-09-18-seed + v11-wave1 + seed-repair + v11-ambient-seedv2 + library-filter + light-music + task018-dynamic-filter + RESEARCH_REVIEW-task021-history-stats + CODE_REVIEW-task021-{b1,b2,b3,b4,f1,r006}；`docs/qa/` v1.1-baseline + v11-wave1-functional + v11-filter-ambient + android-v1-silent-install + android-background-spike + android-tts-spike + task018-dynamic-filter + task020-brand-splash + task021-真机第一轮 + task021-r006；`docs/model/` TASK-MODEL-LOG + DISPATCH-LOG
 - 人要拍什么板（列出来问，不问不许开工）：无阻塞项。用户口令集：`继续开发` / `变更请求：……` / `第一阶段，计划` / `第二阶段，开发`；**commit/push 需用户明确指令**；EAS/付费/环境改动类需用户批（本地 JDK/SDK 链已批）；不擅自关用户其它服务、不改端口外服务
 - permission_request：无
 - 收尾记一笔（neat-freak）：2026-09-19 大交接收尾——文档对齐完成（`PLAN-TASK-018-…md` 状态字段同步为「全链完成并放行」、qa 报告尾部追加收尾核对，首轮 OPEN 项已被复验 CLOSED 取代）；清理未跟踪系统垃圾 `.DS_Store`×5 与 `.expo/dev/logs` 临时日志×2（零业务/仓库文件改动，`git status` 与清理前一致）；账本只校验不改；未决已落位。**遗留待人工确认**：见「三、注意事项与规矩」的 U-1 / U-2 / U-3
@@ -33,6 +33,7 @@
 - 收尾记一笔：2026-09-21 App 图标修复——首版 release 包图标未变，根因为 `android/` 原生目录已存在、`expo run` 未重跑 prebuild（app.json 新图标未进 `res/`）；已 `expo prebuild --platform android`＋gradle 重编＋三台重装，抽屉图标确认为新图（深蓝底青色小人），冷启动正常；新 APK 已覆盖 `releases/stretch-routine-motioncore-v1-local.apk`。
 - 收尾记一笔（neat-freak）：2026-09-27 TASK-020 启动画面换肤收尾——删除零引用孤儿资源 5 个（`assets/splash-icon.png`、`assets/icon.png`、`assets/android-icon-background/foreground/monochrome.png`，均为 Expo 模板默认图，全仓 grep 自证零引用；它们会被 `assetBundlePatterns: assets/**/*` 打进 APK，删后 `favicon.png`（web.favicon 引用）与品牌套 `motion-core-*` 全部保留、不动）；清理未跟踪系统垃圾 `.DS_Store`×3（根/docs/assets）与 `.expo/dev/logs/{start,export}.log`；HANDOFF 账本行数对齐真实（TASK 23 / DISPATCH 35，`check-ledger.mjs` exit 0）；`npm run typecheck` 0 错、`npm test` 36 套件/263 用例全绿；未决见 §3.4 U-2（刷新）/U-4（新增）。仅删文件+改本 HANDOFF，未 commit/push（交 TM）。
 - 收尾记一笔（neat-freak）：2026-09-27 **同批追加·U-2 用户拍板「处理」**——点名靠 README「勿留根」口径处置根目录治理布局：**删 2**（根 `Orca 通用编排者持续推进协议.md` 过期版、根 `Orca 编排治理监督者提示词.md` 重复版，`git rm`）**移 1**（根 `归位表.template.md`，`git mv -f` 去重——`docs/templates/` 本已有自 `90bd862` 起跟踪且逐字节相同的模板源，现仅留指定位置，与已填产物 `docs/templates/归位表.md` 共存）**留 1**（根 `编排者提示词.md` 按 README:23 原位不动）；全仓 grep 自证所有引用者（README/AGENTS/编排者提示词/迁移整理提示词/docs 归位表/scripts）**全部走 `docs/prompts/` 路径、零根路径引用**；更正上轮「引用悬空」误述（引用所指文件一直在 `docs/prompts/`，从未悬空）；新增 §3.4 **U-5**（`迁移整理提示词.md:13` 自相矛盾，属中央治理布局，未擅改，建议移出「铺到根」清单，留用户/中央治理定）。本轮只动 3 个根文件＋本 HANDOFF，未碰 `AGENTS.md`/两账本/业务代码/`经验一句话.md`（U-4 由 experience-recorder 并行处理）。
+- 收尾记一笔（neat-freak）：2026-09-27 **TASK-021 收工洁癖收尾**——①**旧设备口径全仓统一**：`PRODUCT_PLAN_V1.3` 6 处 `xagapro` 改为 `12 Pro（indq5xfi6hovay4d）`（与其 Target Users 设备条款对齐，另把文内 `WAITING_HUMAN_APPROVAL` 状态行对齐 HANDOFF 的 `DEVELOP`）；本 HANDOFF §2.2／§3.1.3／任务备注 同步为「真机验收只用 12 Pro」；历史 QA/review 报告属审计凭据不改（`task021-r006.md` 已自带设备口径说明）；②**计划取代关系补指针**：V1.1／V1.2 顶部各加一行补注（V1.1 已被 V1.2 接续、V1.2 被 V1.3 局部取代，正文与历史结论未动）；`PLAN-TASK-021` 顶部加收工状态指针；V1.3 种子段落加 **F1 实施补注**（「既存同名种子不赋型」已被 v5 存量回填收窄为「实时新增不猜、存量回填允许名字匹配」）；③**清理**：根 `.DS_Store`×1（`temp/` 与 `.expo/dev/logs` 前轮已清空，`temp` 内换肤通用提示词模板随目录一并消失，其方法论已由 `docs/qa/task020-brand-splash.md`＋HANDOFF 启动画面专节＋经验一句话「CNG 真源」吸收）；④**核实 `.gitignore`**：`modules/` 入仓 4 文件全为手写源码、`**/android/build/`／根 `android/`／`releases/` 实测被忽略、仓内零构建产物；`scripts/decision/evals/*.log` 为脱敏真调证据存档非垃圾，保留；⑤§3.4 更新：U-1 消解／U-4 已处理（`cd85cc7`）／新增 U-6、U-7；docs 落盘清单补齐 TASK-020/021 产出；账本只校验不改。三道门禁 typecheck／47 套件 352 用例／check-ledger 全过后 commit+push main（用户已授权）。
 
 ---
 
@@ -79,7 +80,8 @@
 
 ### 2.2 真机与出包（现成能力）
 
-- 三台手机均已装 `releases/stretch-routine-v1.1.0-local.apk`：`xagapro`=Note11T Pro（**开发机，唯一可动**）、`ruby`=Note12、`pearl`=Note12T Pro（后两台是用户机，**禁碰**）。
+- **真机验收设备（2026-09-27 用户明确）＝Redmi Note 12 Pro（序列号 `indq5xfi6hovay4d`，Android 14 / API 34），真机验收只用这一台，不要用别的手机**（TASK-021 全程在此机验收；详见 §3.1 第 3 条）。
+- 历史装机记录：三台手机曾装 `releases/stretch-routine-v1.1.0-local.apk`：`xagapro`=Note11T Pro（旧开发机）、`ruby`=Note12、`pearl`=Note12T Pro（用户机，禁碰）。
 - 新手机装机：直接 `adb install -r` 该 APK；HyperOS 会弹 USB 安装确认框，**等倒计时走完再点「继续安装」**，点早直接判拒绝。
 - 要出新的本地 APK：走本地构建链（`npx expo run:android --variant release` 或 `cd android && ./gradlew :app:assembleRelease`），产物在 `android/app/build/outputs/apk/release/app-release.apk`，按惯例拷成 `releases/stretch-routine-vX.Y.Z-local.apk`。**不耗 EAS 额度**；EAS 免费额度 2026-10-01 恢复仅为备用通道（TASK-015）。
 - 纯 JS 改动想快速真机看效果：`npx expo start --port 8081` + `adb reverse tcp:8081 tcp:8081` + 用 Expo Go 打开 `exp://127.0.0.1:8081`（Expo Go 57.0.9 已装在 xagapro）。
@@ -96,7 +98,7 @@
 
 1. **USB 线连着手机时手机无声**（疑似音频被线缆/投屏路由吞掉），一切「听不到」先拔线再查引擎；听测时拔线（adb 会断，测完再连）。**但纯 UI/交互任务的真机验收不涉及此条，线可保持连接。**
 2. **所有 adb 命令必须带 `export ANDROID_SERIAL=<序列号>`**；当前三台都在线，不加会打到错机器。
-3. **测试机只有 `xagapro`（Note11T Pro，序列号 `IN9LZTAYV4UGU4JF`）**；`ruby` / `pearl` 是用户机，禁碰。
+3. **真机验收设备只有 `indq5xfi6hovay4d`（Redmi Note 12 Pro，2026-09-27 用户明确「只用这一台」）**；`xagapro`（Note11T Pro，旧开发机）/ `ruby` / `pearl`（用户机）未经用户点名不得使用。
 4. **HyperOS 装机**：USB 安装确认框必须等倒计时走完再点「继续安装」。
 5. **commit / push 必须用户明确指令**（含分支名）；不碰 secrets；不改旧的封存版本。
 6. **真机验收前置（ENV-018-1）**：Metro 缓存可能给设备发**旧 bundle**——TASK-018 复验时 qa 就遇到过（行为仍是旧规则）。验收前必须先核对设备上的 bundle 是否含本轮改动标记（或在改动后用 `--clear` 重启 Metro），否则结论无效。
@@ -132,7 +134,7 @@
 
 ### 3.4 待人工确认（neat-freak 提出，TM 未擅改）
 
-- **U-1**：`docs/pm/PRODUCT_PLAN_V1.2.md` 里「当前机器无 JDK / 构建阻塞」等 4 处描述与现状不符（JDK17+SDK 已装、本地构建链已通）；该文件自身 `PLAN_GATE：IN_PROGRESS` 也与 HANDOFF 的 `APPROVED` 不一致。**因它是 DEV_BASELINE，改它属 Plan 变更邻域（Change C），TM 未擅改**。现状以本 HANDOFF 为准；若要改 Plan 正文，请用户拍板走 Change C。
+- **U-1**：`docs/pm/PRODUCT_PLAN_V1.2.md` 里「当前机器无 JDK / 构建阻塞」等 4 处描述与现状不符（JDK17+SDK 已装、本地构建链已通）；该文件自身 `PLAN_GATE：IN_PROGRESS` 也与 HANDOFF 的 `APPROVED` 不一致。**因它是 DEV_BASELINE，改它属 Plan 变更邻域（Change C），TM 未擅改**。现状以本 HANDOFF 为准；若要改 Plan 正文，请用户拍板走 Change C。【2026-09-27 状态更新（neat-freak）】`PRODUCT_PLAN_V1.3` 已批准为现行 `DEV_BASELINE`，其 Technical Approach 含「V1.2 过期环境叙述逐项更正」四条，U-1 所指的不一致对当前开发已无影响；V1.2 正文按约束保留，本轮仅在其顶部加指针补注。**U-1 视为已消解。**
 - **U-2（已处理，2026-09-27 用户拍板「处理」）**：`README.md:24-25` 要求 `Orca 通用编排者持续推进协议.md`/`Orca 编排治理监督者提示词.md` 放 `docs/prompts/`、`归位表.template.md` 放 `docs/templates/`（第 24 行并明令「勿留根」）。**最终处置＝删 2 / 移 1 / 留 1**：
   - ① `git rm` 根 `Orca 通用编排者持续推进协议.md`（28504B / 2026-09-13 的过期十卡版；`docs/prompts/` 版 28518B / 2026-09-19 已更到「9+1＋1」，`cmp` 证两版有差异）。
   - ② `git rm` 根 `Orca 编排治理监督者提示词.md`（与 `docs/prompts/` 版 `cmp` 逐字节相同，纯重复）。
@@ -142,7 +144,9 @@
   - **更正前一轮表述**：`AGENTS.md` 与 `编排者提示词.md` 引用的本就是 `docs/prompts/` 里一直存在的文件，**引用从未悬空**；真正多余的是根目录这两份过期/重复副本与错位的根 `归位表.template.md`。
 - **U-5**（neat-freak 2026-09-27 新提出）：根 `迁移整理提示词.md:13` 一句话内自相矛盾——既说把源包「铺到本项目根目录……归位表.template.md」，又说「把归位表.template.md 放到本项目 docs/templates/」，且与 `README.md:23-25`「文件＋落位路径成对」的口径已不一致。**该文件属中央治理布局，AGENTS 禁改、neat-freak 未擅改**。建议修法：把第 13 行铺底清单里的 `归位表.template.md` 从「铺到根」清单移出，只保留「放到 `docs/templates/`」一句，与 README:25 对齐（改母版真源后同步 `新项目模板包/`、`老项目迁移模板包/` 两包）。请用户/中央治理裁定。
 - **U-3**：`TASK-MODEL-LOG.jsonl` 无 TASK-017 行（只有 DISPATCH 行）——与「TASK-017 未收口」一致；是否补记由用户/TM 定（账本红线只校验不改）。
-- **U-4**（neat-freak 2026-09-27 新提出）：根 `经验一句话.md` 有整段重复——第 26–40 行把第 5–15 行的通用经验（含重复的 `# 经验一句话` 标题）原样再抄一遍，其后才是本项目独有经验（2026-09-18 起）。该文件自称「只追加」且归 experience-recorder 管，**neat-freak 未擅改**；是否去重请用户/TM 定（去重＝纯删除重复行，零信息损失）。既有封存件 `经验一句话.md.旧版-2026-09-27` 未动。
+- **U-4**（neat-freak 2026-09-27 新提出）：根 `经验一句话.md` 有整段重复——第 26–40 行把第 5–15 行的通用经验（含重复的 `# 经验一句话` 标题）原样再抄一遍，其后才是本项目独有经验（2026-09-18 起）。该文件自称「只追加」且归 experience-recorder 管，**neat-freak 未擅改**；是否去重请用户/TM 定（去重＝纯删除重复行，零信息损失）。既有封存件 `经验一句话.md.旧版-2026-09-27` 未动。【2026-09-27 状态更新】用户拍板「处理」，已随 commit `cd85cc7` 去重完成；封存件未动。**U-4 已处理。**
+- **U-6**（neat-freak 2026-09-27 补记，源自 TASK-021 治理挂账）：TASK-021 的 supervisor 复检实派本窗口 `codebuddy/glm-5.3-flash`，与 override 表 supervisor 行（opencode-go/muse-spark-1.3-contributor）不符——系用户直接指派（换谁用户定），DISPATCH-LOG 已留痕，**待用户追认或改 override 表**。
+- **U-7**（neat-freak 2026-09-27 补记，源自 TASK-021 R006 设备侧发现）：12 Pro 上 mibrain TTS 引擎合成走网络（logcat 实证 `AivsSDK ... http://119.147.123.233:80`），与项目「本地优先、离线可用」原则冲突；且新设备需一次性手动设默认 TTS 引擎（12 Pro 出厂 `tts_default_synth=null` 会静默无声，已设 `com.xiaomi.mibrain.speech`/`zh-CN` 修复）。离线语音包方案待用户/后续任务定，不在本仓代码范围。
 
 ### 3.5 构建环境（一句话备忘，详细整理由用户另派智能体负责）
 
@@ -158,7 +162,7 @@
 ## 任务备注
 
 - 业务代码落位：项目根即业务仓库（Expo 工程初始化在项目根；AGENTS 规定业务文件原地不动、搬了会 broken 的留原地记映射——本项目为空白起步，直接在根建 Expo 工程）。
-- 真机：adb 设备已连 `IN9LZTAYV4UGU4JF`（xagapro / 22041216UC）。
+- 真机：adb 设备已连 `IN9LZTAYV4UGU4JF`（xagapro / 22041216UC）。【2026-09-27 更正】真机验收设备已改为 Redmi Note 12 Pro（`indq5xfi6hovay4d`），见 §3.1；本行为 2026-09-18 当时记录。
 - 工具：node24 / npm11 / eas / codebuddy / codex / opencode 可用；expo CLI 需 `npx`。
 - 用户指令：不中断、不提问、小问题自治、疑难挂账、完成后 adb 推送安装到手机。2026-09-18 追加：builder 双模型限额时切 codex/gpt-5.6-luna 续跑禁停摆；禁音令已解除，现在可做语音测试。
 - 音频铁律（2026-09-18 真机实证）：USB 线连着时手机无声，拔线即恢复；一切「听不到」先查线缆再查引擎。Expo Go + Sherpa xiao_ya 神经音用户初听通过；eSpeak 仅备用。听测时拔线（adb 会断，测完再连）。

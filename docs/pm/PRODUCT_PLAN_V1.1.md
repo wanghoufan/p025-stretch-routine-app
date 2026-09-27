@@ -1,5 +1,7 @@
 # PRODUCT_PLAN（Phase1 专用；Readiness 定义唯一正典，卡内引用不重写）
 
+> 【neat-freak 2026-09-27 补注｜仅加指针，正文未动】本计划已被 `PRODUCT_PLAN_V1.2`（其 Release Hardening 增量计划）接续，现再被 `PRODUCT_PLAN_V1.3` 局部取代；当前 `DEV_BASELINE` 以 HANDOFF 为准，本文件仅作历史留存。
+
 - Plan Version：PRODUCT_PLAN_V1.1（V1.0 已实现后的 Release Hardening 增量计划；代码基线 `main@bc1f39f041cfa4a71696534ed86aee25c44d09d1`）
 - PROJECT_PHASE：PLAN
 - Product Goal：保留 V1.0 已完成的拉伸流程产品与数据，在不重做整套业务功能的前提下，把 Android 计时、活动会话、后台/锁屏播报、停止恢复和迁移行为加固到可验证、可恢复、不会静默覆盖用户会话的 V1.1。
