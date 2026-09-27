@@ -4,6 +4,7 @@ import type { Action } from '../../../domain/action/Action';
 import { useNavigation, useRoute } from '../../../app/navigation/NavigationContext';
 import { useServices } from '../../../app/providers/ServicesContext';
 import { useSettings } from '../../../app/providers/SettingsContext';
+import { useLanguage } from '../../../app/providers/LanguageContext';
 import { AppButton } from '../../../shared/components/AppButton';
 import { NoticeBanner } from '../../../shared/components/NoticeBanner';
 import { Screen } from '../../../shared/components/Screen';
@@ -16,16 +17,11 @@ import { RoutineStepList } from '../components/RoutineStepList';
 import { StepEditor, type StepEditValues } from '../components/StepEditor';
 import { listLibraryActions } from '../../actions/services/actionLibraryService';
 
-/**
- * Create / edit routine (T024, US2 + US3).
- *
- * One screen serves both modes: creating starts from the settings defaults, and
- * editing loads the saved routine into the same draft shape.
- */
 export function RoutineEditorScreen() {
   const services = useServices();
   const navigation = useNavigation();
   const { settings, loading: settingsLoading } = useSettings();
+  const { t } = useLanguage();
   const params = useRoute('RoutineEditor');
   const routineId = params?.routineId;
 
@@ -68,18 +64,18 @@ export function RoutineEditorScreen() {
         navigation.replace('RoutineDetail', { routineId: saved.routine.id });
       }
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : '保存失败');
+      setSaveError(error instanceof Error ? error.message : t('editor.saveError'));
     } finally {
       setSaving(false);
     }
-  }, [draftApi, navigation, routineId]);
+  }, [draftApi, navigation, routineId, t]);
 
   const { draft } = draftApi;
 
   if (settingsLoading || draftApi.loading || !draft) {
     return (
-      <Screen title={routineId ? '编辑流程' : '新建流程'} onBack={navigation.goBack}>
-        <NoticeBanner title={draftApi.error ?? '正在载入…'} />
+      <Screen title={routineId ? t('editor.title.edit') : t('editor.title.new')} onBack={navigation.goBack}>
+        <NoticeBanner title={draftApi.error ?? t('common.loading')} />
       </Screen>
     );
   }
@@ -94,12 +90,12 @@ export function RoutineEditorScreen() {
 
   return (
     <Screen
-      title={routineId ? '编辑流程' : '新建流程'}
+      title={routineId ? t('editor.title.edit') : t('editor.title.new')}
       onBack={navigation.goBack}
-      headerRight={<AppButton label="保存" onPress={handleSave} disabled={saving} testID="routine-save" />}
+      headerRight={<AppButton label={t('editor.save')} onPress={handleSave} disabled={saving} testID="routine-save" />}
     >
       {draftApi.error || saveError ? (
-        <NoticeBanner tone="error" title="保存失败" message={saveError ?? draftApi.error ?? ''} />
+        <NoticeBanner tone="error" title={t('editor.saveError')} message={saveError ?? draftApi.error ?? ''} />
       ) : null}
 
       <RoutineFormHeader
@@ -117,7 +113,7 @@ export function RoutineEditorScreen() {
 
       <View style={styles.libraryRow}>
         <AppButton
-          label="从动作库添加"
+          label={t('editor.addFromLibrary')}
           variant="secondary"
           onPress={() => setPickerVisible(true)}
           testID="routine-open-picker"
@@ -133,7 +129,7 @@ export function RoutineEditorScreen() {
       />
 
       <View style={styles.footer}>
-        <AppButton label="保存流程" onPress={handleSave} disabled={saving} testID="routine-save-footer" />
+        <AppButton label={t('editor.saveFooter')} onPress={handleSave} disabled={saving} testID="routine-save-footer" />
       </View>
 
       <StepEditor

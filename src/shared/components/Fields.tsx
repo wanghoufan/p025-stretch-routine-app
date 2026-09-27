@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
 import { colors, MIN_TOUCH_SIZE, radius, spacing } from '../theme';
+import { useLanguage } from '../../app/providers/LanguageContext';
 
 export function TextField({
   label,
@@ -132,7 +133,7 @@ export function StepperField({
   min,
   max,
   step = 5,
-  unit = '秒',
+  unit = 's',
   testID,
   style,
   formatValue,
@@ -149,6 +150,7 @@ export function StepperField({
   /** Override how the value is rendered, e.g. `1.2x` instead of `1.2`. */
   formatValue?: (value: number) => string;
 }) {
+  const { t } = useLanguage();
   const decrease = () => onChange(Math.max(min, value - step));
   const increase = () => onChange(Math.min(max, value + step));
   const display = formatValue ? formatValue(value) : `${value}${unit}`;
@@ -164,7 +166,7 @@ export function StepperField({
           onPress={decrease}
           disabled={value <= min}
           accessibilityRole="button"
-          accessibilityLabel={`${label}减少${step}${unit}`}
+          accessibilityLabel={`${label} ${t('common.minus')} ${step}${unit}`}
           accessibilityState={{ disabled: value <= min }}
           style={({ pressed }) => [
             styles.stepperButton,
@@ -173,14 +175,14 @@ export function StepperField({
           ]}
         >
           <Text style={styles.stepperButtonText} maxFontSizeMultiplier={1.4}>
-            减
+            {t('common.minus')}
           </Text>
         </Pressable>
         <Text
           testID={testID ? `${testID}-value` : undefined}
           style={styles.stepperValue}
           maxFontSizeMultiplier={1.5}
-          accessibilityLabel={`${label}${display}`}
+          accessibilityLabel={`${label} ${display}`}
         >
           {display}
         </Text>
@@ -189,7 +191,7 @@ export function StepperField({
           onPress={increase}
           disabled={value >= max}
           accessibilityRole="button"
-          accessibilityLabel={`${label}增加${step}${unit}`}
+          accessibilityLabel={`${label} ${t('common.plus')} ${step}${unit}`}
           accessibilityState={{ disabled: value >= max }}
           style={({ pressed }) => [
             styles.stepperButton,
@@ -198,7 +200,7 @@ export function StepperField({
           ]}
         >
           <Text style={styles.stepperButtonText} maxFontSizeMultiplier={1.4}>
-            加
+            {t('common.plus')}
           </Text>
         </Pressable>
       </View>

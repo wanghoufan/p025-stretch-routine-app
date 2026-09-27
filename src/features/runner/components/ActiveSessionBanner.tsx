@@ -3,14 +3,8 @@ import type { ActiveSessionSummary } from '../../routines/hooks/useRoutines';
 import { AppButton } from '../../../shared/components/AppButton';
 import { Card } from '../../../shared/components/Layout';
 import { colors, fontSizes, spacing } from '../../../shared/theme';
+import { useLanguage } from '../../../app/providers/LanguageContext';
 
-/**
- * Home Banner for the active session (R020).
- *
- * It renders `routineName` and step count from the session snapshot, so it keeps
- * working after the source Routine was renamed or deleted, and 继续 always
- * resumes the same session instead of starting a new one.
- */
 export function ActiveSessionBanner({
   session,
   onContinue,
@@ -20,11 +14,13 @@ export function ActiveSessionBanner({
   onContinue: () => void;
   busy?: boolean;
 }) {
+  const { t } = useLanguage();
+
   return (
     <View testID="home-active-session-banner">
       <Card style={styles.card}>
         <Text style={styles.label} maxFontSizeMultiplier={1.5}>
-          正在进行的流程
+          {t('home.sessionActive')}
         </Text>
         <Text
           style={styles.name}
@@ -35,14 +31,14 @@ export function ActiveSessionBanner({
           {session.routineName}
         </Text>
         <Text style={styles.meta} maxFontSizeMultiplier={1.5}>
-          {`${session.stepCount} 个动作`}
+          {t('session.stepCount', { count: session.stepCount })}
         </Text>
         <AppButton
-          label="继续"
+          label={t('session.continue')}
           onPress={onContinue}
           disabled={busy}
           testID="home-continue-session"
-          accessibilityHint="回到正在进行的流程"
+          accessibilityHint={t('session.continue')}
           style={styles.action}
         />
       </Card>

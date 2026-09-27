@@ -9,6 +9,16 @@ import {
   normalizeAmbientSound,
   type AmbientSoundOption,
 } from './ambientSound';
+import type { Language } from '../../shared/i18n';
+
+export const APP_LANGUAGE_STORAGE_KEY = 'app_language';
+const LANGUAGE_VALUES: Language[] = ['zh', 'en'];
+
+function normalizeLanguage(value: unknown): Language | undefined {
+  return typeof value === 'string' && (LANGUAGE_VALUES as string[]).includes(value)
+    ? (value as Language)
+    : undefined;
+}
 
 /**
  * Minimal V1 settings (SPEC US7).
@@ -30,6 +40,8 @@ export interface AppSettings {
   defaultTransitionSec: number;
   /** Global countdown background loop (TASK-011); `silent` plays nothing. */
   ambientSound: AmbientSoundOption;
+  /** Interface language; undefined falls back to the default (zh). */
+  app_language?: Language;
 }
 
 export const SPEECH_RATE_MIN = 0.5;
@@ -73,6 +85,7 @@ export function normalizeSettings(input: Partial<AppSettings> = {}): AppSettings
     defaultDurationSec: clampDuration(input.defaultDurationSec ?? DEFAULT_SETTINGS.defaultDurationSec),
     defaultTransitionSec: clampTransition(input.defaultTransitionSec ?? DEFAULT_SETTINGS.defaultTransitionSec),
     ambientSound: normalizeAmbientSound(input.ambientSound),
+    app_language: normalizeLanguage(input.app_language),
   };
 }
 
@@ -86,6 +99,7 @@ export function settingsToRecord(settings: AppSettings): Record<string, string> 
     defaultDurationSec: String(settings.defaultDurationSec),
     defaultTransitionSec: String(settings.defaultTransitionSec),
     ambientSound: settings.ambientSound,
+    ...(settings.app_language ? { [APP_LANGUAGE_STORAGE_KEY]: settings.app_language } : {}),
   };
 }
 
@@ -136,5 +150,6 @@ export function settingsFromRecord(record: Record<string, string>): AppSettings 
   }
   // `normalizeAmbientSound` already falls back for unknown / missing values.
   partial.ambientSound = normalizeAmbientSound(record.ambientSound);
+  partial.app_language = normalizeLanguage(record[APP_LANGUAGE_STORAGE_KEY]);
   return normalizeSettings(partial);
 }

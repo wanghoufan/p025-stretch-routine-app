@@ -5,12 +5,8 @@ import { colors, radius, spacing } from '../../../shared/theme';
 import { AppButton } from '../../../shared/components/AppButton';
 import { ActionIconTile } from '../../../shared/components/ActionIconTile';
 import { sceneIconFor } from '../../../shared/assets/actionIcons';
+import { useLanguage } from '../../../app/providers/LanguageContext';
 
-/**
- * Home routine card (T036): step count, estimated duration, and the primary
- * Start action. After the app was killed mid-routine the button becomes 继续,
- * which is how recovery is reachable from a cold start (FR-032).
- */
 export function RoutineCard({
   summary,
   hasActiveSession,
@@ -23,12 +19,11 @@ export function RoutineCard({
   hasActiveSession: boolean;
   onOpen: () => void;
   onStart: () => void;
-  /** Optional 角标, e.g. the 低/中/高 difficulty on 核心 templates (TASK-014). */
   badge?: string;
-  /** Scene group for the display-only icon tile (defaults to 全身拉伸). */
   scene?: string;
 }) {
-  const meta = `${summary.stepCount} 个动作 · 约 ${formatDuration(summary.totalDurationSec)}`;
+  const { t } = useLanguage();
+  const meta = t('detail.stepCount', { count: summary.stepCount, duration: formatDuration(summary.totalDurationSec) });
 
   return (
     <View style={styles.card}>
@@ -44,7 +39,7 @@ export function RoutineCard({
               style={styles.badge}
               maxFontSizeMultiplier={1.4}
               testID={`routine-badge-${summary.id}`}
-              accessibilityLabel={`难度${badge}`}
+              accessibilityLabel={`${t('detail.difficulty')} ${badge}`}
             >
               {badge}
             </Text>
@@ -55,23 +50,23 @@ export function RoutineCard({
         </Text>
         {hasActiveSession ? (
           <Text style={styles.resumeHint} maxFontSizeMultiplier={1.5}>
-            上次还没结束
+            {t('routine.resumeHint')}
           </Text>
         ) : null}
         </View>
       </View>
       <View style={styles.actions}>
         <AppButton
-          label={hasActiveSession ? '继续' : '开始'}
+          label={hasActiveSession ? t('common.continue') : t('common.start')}
           onPress={onStart}
-          accessibilityHint={hasActiveSession ? '继续上次未完成的流程' : '从头开始这个流程'}
+          accessibilityHint={hasActiveSession ? t('routine.resumeHint') : t('routine.startHint')}
           testID={`routine-start-${summary.id}`}
         />
         <AppButton
-          label="详情"
+          label={t('routine.detail')}
           variant="secondary"
           onPress={onOpen}
-          accessibilityHint="查看与编辑流程内容"
+          accessibilityHint={t('routine.openHint')}
           testID={`routine-open-${summary.id}`}
         />
       </View>

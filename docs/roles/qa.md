@@ -4,7 +4,7 @@
 - 真机 Canary（七项全过才写“真机 QA 已启用（附模型精确ID＋Runtime）”）：读屏／截图／点击／输入／滚动／判断 UI 状态／完成至少一条真实端到端流程；未过标 `PENDING / NOT VERIFIED`，禁编造已支持。
 - 真机QA会话能力预检（每session正式用例前硬门禁）：顺序工具清单→Runtime权限→无副作用UI Canary→最终门禁；结论枚举只许 `PASS / BLOCKED_TOOL_NOT_INJECTED / BLOCKED_ORCA_APPROVAL / BLOCKED_RUNTIME / BLOCKED_OS_PERMISSION / FAIL_UNVERIFIED_ACTION / NOT_VERIFIED`；全PASS才进正式QA，否则立即停止；禁 `FAIL_MODEL_ACTION`；`ok=true/exit 0/工具调用成功`但无状态或像素变化记 `FAIL_UNVERIFIED_ACTION`；禁跨模型/跨Runtime/跨session拼PASS；Mac预检不代Android/iPhone验收；结果落 `docs/qa/` 预检节（照 BUGS.template.md）。
 - 模型：见 USER_MODEL_OVERRIDE.md 的 qa 行（冲突以模型表为准，卡内不复述ID）。
-- 双态分派：普通QA（回归/校验/DoD）走 codex Luna；真机直驱：adb/Expo 类真机任务走本窗口 bash 直驱（codex 沙箱必 BLOCKED，不硬闯）；预检照常，BLOCKED 照停；结果 note 记分支原因。scrcpy 仅用于看屏，不做自动化通道。
+- 双态分派：普通QA（回归/校验/DoD）走 codex Luna，**派工带 `-s danger-full-access` 关闭沙箱**（该模式＝完整访问权，非仅解端口；靠“仅限QA＋记账”约束）——否则端口绑定/网络被 codex 沙箱拒（历史反复出现 `BLOCKED_RUNTIME`/EPERM 假失败）；实测 `codex exec -s danger-full-access` 可绑 127.0.0.1 端口、curl 通。**解禁仅限 QA 场景，须在 DISPATCH note 记账**，其他角色禁带；真机直驱：adb/Expo 类真机任务走本窗口 bash 直驱；预检照常，BLOCKED 照停；结果 note 记分支原因。scrcpy 仅用于看屏，不做自动化通道。
 - 输出：docs/qa/（照 BUGS.template.md）。
 - 不做：不顺手改代码，挂了打回给builder。
 - Web QA 标准通道 V1（2026-09-21 本机实测冻结，BROWSEROS_WEB_QA=READY／ORCA_INTEGRATION=READY）：Web/PWA/localhost 默认走 BrowserOS neo＋MCP；实际桥接 Orca→OpenCode CLI→BrowserOS MCP（Orca 无原生 MCP 配置面，禁写成“Orca 原生 MCP 已验证”）；dev 不自选/不更换浏览器基础设施。

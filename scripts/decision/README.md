@@ -50,3 +50,5 @@ done
 ## 依赖
 
 零依赖（Node≥22 fetch 直调）。曾走 AI SDK＋Gateway 已废弃，见 Git 历史。
+
+- 决策流水（best-effort）：每次调用追加一行到项目内 `docs/model/JEV-DECISION-LOG.jsonl`（env `JEV_DECISION_LOG` 覆盖；目录不存在则跳过；只记非敏感元数据，不记 state 原文/Key；不改权限与 Contract）。回归 `node test-decision-log.mjs`。

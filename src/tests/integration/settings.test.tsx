@@ -49,7 +49,7 @@ describe('US7 设置 (T083/T084/T086)', () => {
     });
 
     expect(await screen.findByTestId('settings-default-duration')).toBeTruthy();
-    expect(screen.getByTestId('settings-default-duration-value')).toHaveTextContent('40秒');
+    expect(screen.getByTestId('settings-default-duration-value')).toHaveTextContent('40s');
 
     const stored = await context.services.settings.load();
     expect(stored.ttsEnabled).toBe(false);
@@ -73,8 +73,8 @@ describe('US7 设置 (T083/T084/T086)', () => {
     await press('home-new-routine');
     await screen.findByTestId('routine-name-input');
 
-    expect(screen.getByTestId('routine-default-duration-value')).toHaveTextContent('45秒');
-    expect(screen.getByTestId('routine-default-transition-value')).toHaveTextContent('15秒');
+    expect(screen.getByTestId('routine-default-duration-value')).toHaveTextContent('45s');
+    expect(screen.getByTestId('routine-default-transition-value')).toHaveTextContent('15s');
 
     await typeText('routine-name-input', '默认值流程');
     await press('routine-save');

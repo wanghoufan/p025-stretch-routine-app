@@ -25,10 +25,10 @@ describe('流程模板场景分组 (TASK-014)', () => {
     expect(screen.getByTestId('routine-group-热身')).toBeTruthy();
     expect(screen.getByTestId('routine-group-核心')).toBeTruthy();
 
-    expect(screen.getByText('日常拉伸（2）')).toBeTruthy();
-    expect(screen.getByText('健身前后（3）')).toBeTruthy();
-    expect(screen.getByText('热身（1）')).toBeTruthy();
-    expect(screen.getByText('核心（3）')).toBeTruthy();
+    expect(screen.getByText('日常拉伸 (2)')).toBeTruthy();
+    expect(screen.getByText('健身前后 (3)')).toBeTruthy();
+    expect(screen.getByText('热身 (1)')).toBeTruthy();
+    expect(screen.getByText('核心 (3)')).toBeTruthy();
 
     expect(screen.getByText('晨起全身拉伸')).toBeTruthy();
     expect(screen.getByText('睡前全身放松')).toBeTruthy();

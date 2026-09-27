@@ -3,6 +3,7 @@ import { Alert, StyleSheet, Switch, Text, View } from 'react-native';
 import { useNavigation } from '../../../app/navigation/NavigationContext';
 import { useServices } from '../../../app/providers/ServicesContext';
 import { useSettings } from '../../../app/providers/SettingsContext';
+import { useLanguage } from '../../../app/providers/LanguageContext';
 import { useSpeech } from '../../../app/providers/SpeechContext';
 import { clearSeededExamples } from '../../../data/seeds';
 import { AppButton } from '../../../shared/components/AppButton';
@@ -11,6 +12,7 @@ import { NoticeBanner } from '../../../shared/components/NoticeBanner';
 import { Screen } from '../../../shared/components/Screen';
 import { RadioGroupField, StepperField } from '../../../shared/components/Fields';
 import { colors, fontSizes, spacing } from '../../../shared/theme';
+import { LANGUAGES } from '../../../shared/i18n';
 import {
   COUNTDOWN_WARNING_MAX_SEC,
   COUNTDOWN_WARNING_MIN_SEC,
@@ -25,16 +27,11 @@ import {
 } from '../ambientSound';
 import { DURATION_MAX_SEC, DURATION_MIN_SEC, TRANSITION_MAX_SEC, TRANSITION_MIN_SEC } from '../../../domain/routine/constants';
 
-/**
- * Settings (T083, SPEC US7).
- *
- * Only the values that change speech or timing defaults are configurable —
- * cosmetic personalisation is explicitly out of V1 scope.
- */
 export function SettingsScreen() {
   const navigation = useNavigation();
   const services = useServices();
   const { settings, loading, update } = useSettings();
+  const { language, setLanguage, t } = useLanguage();
   const { tts, ttsError, dismissTtsError } = useSpeech();
   const [clearing, setClearing] = useState(false);
   const [clearResult, setClearResult] = useState<string | null>(null);
@@ -44,21 +41,17 @@ export function SettingsScreen() {
   const runSpeechTest = useCallback(() => {
     dismissTtsError();
     if (!settings.ttsEnabled) {
-      setSpeechTest('请先打开上面的“语音播报”开关。');
+      setSpeechTest(t('settings.speechTestOff'));
       return;
     }
     tts.resetSession();
     const queued = tts.announce({
       key: `speech-test:${Date.now()}`,
-      text: '语音播报测试，如果你听到这句话，说明播报正常',
+      text: t('settings.speechTestText'),
       interrupt: true,
     });
-    setSpeechTest(
-      queued
-        ? '测试语音已发送。如果手机没出声，一般是系统文字转语音引擎缺中文语音包：去系统设置→更多设置→无障碍→文字转语音输出，换一个带中文的引擎并下载中文语音。'
-        : '测试语音被拦截（开关关闭或重复发送），稍后再试。',
-    );
-  }, [dismissTtsError, settings.ttsEnabled, tts]);
+    setSpeechTest(queued ? t('settings.speechTestOk') : t('settings.speechTestFail'));
+  }, [dismissTtsError, settings.ttsEnabled, tts, t]);
 
   const runClear = useCallback(async () => {
     setClearing(true);
@@ -73,24 +66,24 @@ export function SettingsScreen() {
       const total = result.removedRoutineNames.length + result.removedActionNames.length;
       setClearResult(
         total === 0
-          ? '没有找到可清除的示例数据。'
-          : `已清除 ${result.removedRoutineNames.length} 个示例流程、${result.removedActionNames.length} 个示例动作。`,
+          ? t('settings.clearEmpty')
+          : t('settings.clearSuccess', { routines: result.removedRoutineNames.length, actions: result.removedActionNames.length }),
       );
     } catch (clearFailure) {
-      setClearError(clearFailure instanceof Error ? clearFailure.message : '清除示例数据失败');
+      setClearError(clearFailure instanceof Error ? clearFailure.message : t('settings.clearError'));
     } finally {
       setClearing(false);
     }
-  }, [services]);
+  }, [services, t]);
 
   const confirmClear = useCallback(() => {
     Alert.alert(
-      '清除示例数据',
-      '将删除预置的示例流程和示例动作。你自己创建或改名过的内容不会受影响，且清除后不会再自动出现。此操作不可撤销。',
+      t('settings.clearConfirm'),
+      t('settings.clearConfirmMsg'),
       [
-        { text: '取消', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '清除',
+          text: t('settings.clearExamples'),
           style: 'destructive',
           onPress: () => {
             void runClear();
@@ -99,19 +92,43 @@ export function SettingsScreen() {
       ],
       { cancelable: true },
     );
-  }, [runClear]);
+  }, [runClear, t]);
 
   return (
-    <Screen title="设置" onBack={navigation.goBack}>
-      {loading ? <NoticeBanner title="正在读取设置…" /> : null}
+    <Screen title={t('settings.title')} onBack={navigation.goBack}>
+      {loading ? <NoticeBanner title={t('settings.reading')} /> : null}
       {clearResult ? <NoticeBanner title={clearResult} /> : null}
-      {clearError ? <NoticeBanner tone="error" title="清除示例数据失败" message={clearError} /> : null}
+      {clearError ? <NoticeBanner tone="error" title={t('settings.clearError')} message={clearError} /> : null}
 
-      <SectionTitle>语音</SectionTitle>
+      <SectionTitle>{t('settings.language')}</SectionTitle>
       <Card>
         <View style={styles.switchRow}>
           <Text style={styles.switchLabel} maxFontSizeMultiplier={1.5}>
-            语音播报
+            {t('settings.language')}
+          </Text>
+          <View style={styles.languageOptions}>
+            {LANGUAGES.map((lang) => (
+              <AppButton
+                key={lang.value}
+                label={lang.label}
+                variant={language === lang.value ? 'primary' : 'secondary'}
+                onPress={() => setLanguage(lang.value)}
+                testID={`settings-language-${lang.value}`}
+                style={styles.languageButton}
+              />
+            ))}
+          </View>
+        </View>
+        <Text style={styles.hint} maxFontSizeMultiplier={1.5}>
+          {t('settings.languageDesc')}
+        </Text>
+      </Card>
+
+      <SectionTitle>{t('settings.speech')}</SectionTitle>
+      <Card>
+        <View style={styles.switchRow}>
+          <Text style={styles.switchLabel} maxFontSizeMultiplier={1.5}>
+            {t('settings.ttsEnabled')}
           </Text>
           <Switch
             value={settings.ttsEnabled}
@@ -120,16 +137,16 @@ export function SettingsScreen() {
             }}
             trackColor={{ false: colors.border, true: colors.primary }}
             thumbColor={colors.text}
-            accessibilityLabel="语音播报开关"
+            accessibilityLabel={t('settings.ttsEnabled')}
             testID="settings-tts-enabled"
           />
         </View>
         <Text style={styles.hint} maxFontSizeMultiplier={1.5}>
-          关闭后流程仍然按时间自动切换，只是不再朗读。
+          {t('settings.ttsEnabledDesc')}
         </Text>
 
         <StepperField
-          label="语速"
+          label={t('settings.speechRate')}
           value={settings.speechRate}
           onChange={(value) => {
             void update({ speechRate: value });
@@ -142,21 +159,21 @@ export function SettingsScreen() {
         />
 
         <AppButton
-          label="测试语音播报"
+          label={t('settings.speechTest')}
           variant="secondary"
           onPress={runSpeechTest}
-          accessibilityHint="朗读一句测试语音，检查手机是否出声"
+          accessibilityHint={t('settings.speechTestHint')}
           testID="settings-speech-test"
           style={styles.clearButton}
         />
         {speechTest ? <NoticeBanner title={speechTest} /> : null}
         {ttsError ? (
-          <NoticeBanner tone="error" title="语音引擎报错" message={ttsError} />
+          <NoticeBanner tone="error" title={t('settings.ttsError')} message={ttsError} />
         ) : null}
 
         <View style={styles.switchRow}>
           <Text style={styles.switchLabel} maxFontSizeMultiplier={1.5}>
-            结束前倒计时提示
+            {t('settings.countdownWarning')}
           </Text>
           <Switch
             value={settings.countdownWarningEnabled}
@@ -165,12 +182,12 @@ export function SettingsScreen() {
             }}
             trackColor={{ false: colors.border, true: colors.primary }}
             thumbColor={colors.text}
-            accessibilityLabel="倒计时提示开关"
+            accessibilityLabel={t('settings.countdownWarning')}
             testID="settings-countdown-enabled"
           />
         </View>
         <StepperField
-          label="倒计时提示时长"
+          label={t('settings.countdownSec')}
           value={settings.countdownWarningSec}
           onChange={(value) => {
             void update({ countdownWarningSec: value });
@@ -182,26 +199,26 @@ export function SettingsScreen() {
         />
 
         <RadioGroupField
-          label="倒计时背景音"
+          label={t('settings.ambientSound')}
           value={settings.ambientSound}
           onChange={(value) => {
             void update({ ambientSound: value });
           }}
           options={AMBIENT_SOUND_OPTIONS.map((option) => ({
             value: option,
-            label: AMBIENT_SOUND_META[option].label,
-            description: AMBIENT_SOUND_META[option].description,
+            label: t(`settings.ambient.${option}`),
+            description: AMBIENT_SOUND_META[option].description ? t(`settings.ambient.${option}Desc`) : undefined,
             testID: ambientSoundTestId(option),
           }))}
           testID="settings-ambient-group"
-          hint="只在动作/过渡倒计时中循环播放，暂停或结束立即停止；语音播报时同时保留。"
+          hint={t('settings.ambientSoundDesc')}
         />
       </Card>
 
-      <SectionTitle>新流程默认值</SectionTitle>
+      <SectionTitle>{t('settings.defaults')}</SectionTitle>
       <Card>
         <StepperField
-          label="默认动作时长"
+          label={t('settings.defaultDuration')}
           value={settings.defaultDurationSec}
           onChange={(value) => {
             void update({ defaultDurationSec: value });
@@ -212,7 +229,7 @@ export function SettingsScreen() {
           testID="settings-default-duration"
         />
         <StepperField
-          label="默认过渡时长"
+          label={t('settings.defaultTransition')}
           value={settings.defaultTransitionSec}
           onChange={(value) => {
             void update({ defaultTransitionSec: value });
@@ -223,30 +240,30 @@ export function SettingsScreen() {
           testID="settings-default-transition"
         />
         <Text style={styles.hint} maxFontSizeMultiplier={1.5}>
-          只影响之后新建的流程，不会改动已经保存的流程。
+          {t('settings.defaultsDesc')}
         </Text>
       </Card>
 
-      <SectionTitle>示例数据</SectionTitle>
+      <SectionTitle>{t('settings.examples')}</SectionTitle>
       <Card>
         <Text style={styles.hint} maxFontSizeMultiplier={1.5}>
-          预置的示例流程和示例动作可以一键清除。你自己创建或改名过的内容不会受影响；清除后示例不会自动回来。
+          {t('settings.examplesDesc')}
         </Text>
         <AppButton
-          label="清除示例数据"
+          label={t('settings.clearExamples')}
           variant="danger"
           onPress={confirmClear}
           disabled={clearing}
-          accessibilityHint="删除预置的示例流程和示例动作，需要二次确认"
+          accessibilityHint={t('settings.clearExamplesHint')}
           testID="settings-clear-examples"
           style={styles.clearButton}
         />
       </Card>
 
-      <SectionTitle>关于</SectionTitle>
+      <SectionTitle>{t('settings.about')}</SectionTitle>
       <Card>
         <Text style={styles.about} maxFontSizeMultiplier={1.5}>
-          本应用完全离线运行，不需要注册、不联网、不含 AI 或支付功能。流程内容由你自己定义；本应用只负责按顺序提示与计时，不构成医学建议。
+          {t('settings.aboutDesc')}
         </Text>
       </Card>
     </Screen>
@@ -265,6 +282,14 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSizes.body,
     color: colors.text,
+  },
+  languageOptions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  languageButton: {
+    paddingHorizontal: spacing.md,
+    minHeight: 40,
   },
   hint: {
     fontSize: 13,

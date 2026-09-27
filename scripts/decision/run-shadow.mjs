@@ -37,16 +37,15 @@ const hashOf = (p) => { try { return createHash("sha256").update(readFileSync(p)
 const POLICY_HASH = hashOf("scripts/decision/policy.json");
 const MANIFEST_HASH = hashOf("scripts/decision/evals/skill-manifest.json");
 const RUNNER_HASH = hashOf("scripts/decision/run-shadow.mjs");
-// policy static assertions (fail fast): exact target set, no mimo anywhere, BULK_FAST empty
+// policy static assertions (fail fast): exact 3-target set, mimo via claude, BULK_FAST=mimo
 {
   const pol = JSON.parse(readFileSync("scripts/decision/policy.json", "utf8"));
   const tids = Object.keys(pol.route_targets || {}).sort();
-  const want = ["codebuddy__deepseek-v4.1-flash__high", "volc-coding__glm-5.3-flash__high"].sort();
-  const blob = JSON.stringify(pol);
-  if (JSON.stringify(tids) !== JSON.stringify(want)) { console.log("POLICY_FAIL: route_targets != {deepseek,glm}"); process.exit(1); }
-  if (/mimo/i.test(blob)) { console.log("POLICY_FAIL: mimo still present"); process.exit(1); }
-  if ((pol.class_targets?.BULK_FAST || []).length !== 0) { console.log("POLICY_FAIL: BULK_FAST not empty"); process.exit(1); }
-  console.log("POLICY_OK: targets={deepseek,glm} no-mimo BULK_FAST-empty version=" + pol.policy_version);
+  const want = ["codebuddy__glm-5.3-flash__high", "radeon-mimo__mimo-v2.6-flash__claude", "volc-coding__deepseek-flash__high"].sort();
+  if (JSON.stringify(tids) !== JSON.stringify(want)) { console.log("POLICY_FAIL: route_targets != {glm,mimo,deepseek} got " + JSON.stringify(tids)); process.exit(1); }
+  const bulk = pol.class_targets?.BULK_FAST || [];
+  if (bulk.length !== 1 || bulk[0] !== "radeon-mimo__mimo-v2.6-flash__claude") { console.log("POLICY_FAIL: BULK_FAST != [mimo/claude]"); process.exit(1); }
+  console.log("POLICY_OK: 3-targets mimo/claude BULK_FAST=mimo version=" + pol.policy_version);
 }
 // probe CLI-declared versions (no hardcode): mock ok-a returns canned success
 let PROBE = { contract_version: null, policy_version: null, requested_model: null, advisory_only: null };

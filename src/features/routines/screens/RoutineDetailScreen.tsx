@@ -4,6 +4,7 @@ import type { RoutineWithSteps } from '../../../data/repositories/routineReposit
 import { useNavigation, useRoute } from '../../../app/navigation/NavigationContext';
 import { useServices } from '../../../app/providers/ServicesContext';
 import { useSettings } from '../../../app/providers/SettingsContext';
+import { useLanguage } from '../../../app/providers/LanguageContext';
 import { useSpeech } from '../../../app/providers/SpeechContext';
 import { totalDurationSec } from '../../../domain/routine/duration';
 import { formatDuration } from '../../../shared/utils/format';
@@ -19,16 +20,13 @@ import { duplicateRoutine } from '../services/duplicateRoutine';
 import { StartConflictPrompt } from '../../runner/components/StartConflictPrompt';
 import { useStartRoutine } from '../../runner/hooks/useStartRoutine';
 
-/**
- * Routine detail (T063): inspect the sequence, then start / edit / duplicate /
- * delete it (FR-009, FR-010, R017).
- */
 export function RoutineDetailScreen() {
   const { routineId } = useRoute('RoutineDetail');
   const services = useServices();
   const navigation = useNavigation();
   const { tts } = useSpeech();
   const { settings } = useSettings();
+  const { t } = useLanguage();
 
   const [loaded, setLoaded] = useState<RoutineWithSteps | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,11 +39,11 @@ export function RoutineDetailScreen() {
     try {
       const result = await services.routines.getWithSteps(routineId);
       setLoaded(result);
-      setError(result ? null : '流程不存在');
+      setError(result ? null : t('detail.notFound'));
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : '读取流程失败');
+      setError(loadError instanceof Error ? loadError.message : t('detail.readError'));
     }
-  }, [services, routineId]);
+  }, [services, routineId, t]);
 
   useEffect(() => {
     void refresh();
@@ -57,23 +55,23 @@ export function RoutineDetailScreen() {
       await duplicateRoutine(services.routines, routineId, { generateId: services.generateId });
       navigation.reset('Home', undefined);
     } catch (duplicateError) {
-      setError(duplicateError instanceof Error ? duplicateError.message : '复制失败');
+      setError(duplicateError instanceof Error ? duplicateError.message : t('detail.duplicateError'));
     } finally {
       setBusy(false);
     }
-  }, [services, routineId, navigation]);
+  }, [services, routineId, navigation, t]);
 
   const confirmDelete = useCallback(() => {
     if (!loaded) {
       return;
     }
     Alert.alert(
-      '删除流程',
-      buildDeleteRoutineMessage(loaded.routine.name, loaded.steps.length),
+      t('detail.deleteConfirm'),
+      t('detail.deleteMessage', { name: loaded.routine.name, count: loaded.steps.length }),
       [
-        { text: '取消', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '删除',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
             void (async () => {
@@ -81,7 +79,7 @@ export function RoutineDetailScreen() {
                 await deleteRoutine(services.routines, routineId);
                 navigation.reset('Home', undefined);
               } catch (deleteError) {
-                setError(deleteError instanceof Error ? deleteError.message : '删除失败');
+                setError(deleteError instanceof Error ? deleteError.message : t('detail.deleteError'));
               }
             })();
           },
@@ -89,21 +87,21 @@ export function RoutineDetailScreen() {
       ],
       { cancelable: true },
     );
-  }, [loaded, services, routineId, navigation]);
+  }, [loaded, services, routineId, navigation, t]);
 
   if (error) {
     return (
-      <Screen title="流程详情" onBack={navigation.goBack}>
-        <NoticeBanner tone="error" title="无法打开流程" message={error} />
+      <Screen title={t('detail.title')} onBack={navigation.goBack}>
+        <NoticeBanner tone="error" title={t('detail.openError')} message={error} />
       </Screen>
     );
   }
 
   if (!loaded) {
     return (
-      <Screen title="流程详情" onBack={navigation.goBack}>
+      <Screen title={t('detail.title')} onBack={navigation.goBack}>
         <Text style={styles.meta} maxFontSizeMultiplier={1.5}>
-          正在载入…
+          {t('common.loading')}
         </Text>
       </Screen>
     );
@@ -112,7 +110,7 @@ export function RoutineDetailScreen() {
   const total = totalDurationSec(loaded.steps);
 
   return (
-    <Screen title="流程详情" onBack={navigation.goBack}>
+    <Screen title={t('detail.title')} onBack={navigation.goBack}>
       <Card>
         <View style={styles.heroRow}>
           <ActionIconTile source={actionIconFor(loaded.routine.name)} size={72} />
@@ -121,14 +119,14 @@ export function RoutineDetailScreen() {
               {loaded.routine.name}
             </Text>
             <Text style={styles.meta} maxFontSizeMultiplier={1.5}>
-              {`${loaded.steps.length} 个动作 · 约 ${formatDuration(total)}`}
+              {t('detail.stepCount', { count: loaded.steps.length, duration: formatDuration(total) })}
             </Text>
           </View>
         </View>
       </Card>
 
       <AppButton
-        label="开始流程"
+        label={t('detail.start')}
         onPress={() => {
           void startFlow.start(routineId);
         }}
@@ -138,9 +136,9 @@ export function RoutineDetailScreen() {
       {startFlow.state.status === 'error' ? (
         <NoticeBanner
           tone="error"
-          title="无法开始流程"
+          title={t('home.startError')}
           message={startFlow.state.message}
-          actionLabel="知道了"
+          actionLabel={t('common.gotIt')}
           onAction={startFlow.dismissError}
         />
       ) : null}
@@ -159,32 +157,32 @@ export function RoutineDetailScreen() {
       ) : null}
       <View style={styles.row}>
         <AppButton
-          label="编辑"
+          label={t('common.edit')}
           variant="secondary"
           onPress={() => navigation.navigate('RoutineEditor', { routineId })}
           testID="detail-edit"
         />
         <AppButton
-          label="复制"
+          label={t('detail.duplicate')}
           variant="secondary"
           onPress={handleDuplicate}
           disabled={busy}
           testID="detail-duplicate"
         />
-        <AppButton label="删除" variant="danger" onPress={confirmDelete} testID="detail-delete" />
+        <AppButton label={t('common.delete')} variant="danger" onPress={confirmDelete} testID="detail-delete" />
       </View>
 
-      <SectionTitle>动作顺序</SectionTitle>
+      <SectionTitle>{t('detail.actionOrder')}</SectionTitle>
       {loaded.steps.map((step, index) => (
         <Card key={step.id}>
           <View style={styles.stepRow}>
             <ActionIconTile source={actionIconFor(step.displayName)} size={48} />
             <View style={styles.stepInfo}>
               <Text style={styles.stepName} maxFontSizeMultiplier={1.5}>
-                {`${index + 1}. ${step.displayName}`}
+                {t('detail.stepItem', { index: index + 1, name: step.displayName })}
               </Text>
               <Text style={styles.meta} maxFontSizeMultiplier={1.5}>
-                {`${formatDuration(step.durationSec)} · 过渡 ${formatDuration(step.transitionSec)}`}
+                {t('detail.stepMeta', { duration: formatDuration(step.durationSec), transition: formatDuration(step.transitionSec) })}
               </Text>
             </View>
           </View>

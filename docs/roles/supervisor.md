@@ -51,3 +51,4 @@
 - 输出：无独立文档，打回意见直接写在被检输出的评论区/复检行。
 - 例外：编排者失联才替喊人一声。
 - 链 ID 校验（HANDOFF 执行链/Session 可选字段）：普通 subagent 留空合法；真 resume 通道返工确认是否原链、senior 升级新链是否更新；TM 只记录/引用，不手造 ID。
+- 兼 **Task Manager Observer**（职责扩展，非新角色，2026-09-26）：观察 TM 是否持续推进/派错角色/重复派工/无意义重读重跑/该升未升/无必要升级/绕 Human Gate/违反 Phase/结果已回但无 next action/需 Human Rescue；只做①标记异常②按现有机制提醒/唤醒/替喊一次；**不评分、不接管 TM、不改模型表、不跨 Gate**（评分与主备建议由 Governance Steward 周期审计；见 AGENTS「Task Manager Qualification」与 `docs/model/TASK-MANAGER-QUALIFICATION.md`）。

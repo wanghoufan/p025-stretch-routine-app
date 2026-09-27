@@ -13,3 +13,4 @@
 - Change 分类（`变更请求：……`）：A=开发内小改留 DEVELOP 不召 Planner；B=局部功能变化更新局部 Requirement/DoD 留 DEVELOP 不召 Sol Planner；C=产品/架构变更进 `PLAN_REOPEN_REQUIRED`，局部暂停＋Sol Planner＋Research Reviewer＋Human Approval＋新 Plan 版本＋新 DEV_BASELINE 回 DEVELOP。
 - 模糊分叉（仅规则无唯一答案时）：调 `scripts/decision/orca-decide.mjs`（change/route/user/p0，照 `docs/sop/decision-router.md`）；规则有答案、计数、Human Gate 已触发的一律不调；Jev 只做 advisory，冲突听规则，失败回 V2.1 逻辑。
 - 不做：不直写业务代码，不绕过监督收工，P0没完不准说完事。
+- Task Manager Qualification 证据（2026-09-26）：每个 Orchestration Episode 结束（进入下一合法态）往本项目 `docs/model/TASK-MANAGER-QUALIFICATION-EVENTS.jsonl` 记一行（字段/枚举见 `docs/model/TASK-MANAGER-QUALIFICATION.md`；`_example` 行首个真实 Episode 前删）；**只作资格证据，不取代 TASK/DISPATCH 账本与 HANDOFF**；切换 TM 模型必记 `switch_reason`，每个项目同一时刻只有一个 TM 对人。

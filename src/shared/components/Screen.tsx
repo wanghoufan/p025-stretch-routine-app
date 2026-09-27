@@ -2,14 +2,10 @@ import type { ReactNode } from 'react';
 import { Platform, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { colors, fontSizes, MIN_TOUCH_SIZE, spacing } from '../theme';
 import { AppButton } from './AppButton';
+import { useLanguage } from '../../app/providers/LanguageContext';
 
-/**
- * Top inset for the title bar. Android reports its status bar height here;
- * other platforms report 0, which keeps the layout correct inside Expo Go.
- */
 const TOP_INSET = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : 0;
 
-/** Screen scaffold with a title bar. Keeps headers consistent everywhere. */
 export function Screen({
   title,
   onBack,
@@ -18,22 +14,23 @@ export function Screen({
   headerRight,
 }: {
   title: string;
-  /** Rendered as a 返回 button when provided. */
   onBack?: () => void;
   children: ReactNode;
   scroll?: boolean;
   headerRight?: ReactNode;
 }) {
+  const { t } = useLanguage();
+
   return (
     <View style={styles.safe}>
       <StatusBar barStyle="light-content" />
       <View style={styles.header}>
         {onBack ? (
           <AppButton
-            label="返回"
+            label={t('common.back')}
             variant="secondary"
             onPress={onBack}
-            accessibilityHint="返回上一个页面"
+            accessibilityHint={t('common.back')}
             style={styles.backButton}
           />
         ) : null}

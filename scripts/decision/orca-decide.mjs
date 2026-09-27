@@ -3,7 +3,8 @@
 // Transport: direct POST https://api.typesafe.ai/v1/systemone (model jev-latest).
 // Usage: orca-decide <change|route|user|p0|profile|bclass|skill> <state.json>
 // Secret: ~/.config/orca/decision.env (TYPESAFE_API_KEY). Never printed, never sent anywhere except TypeSafe.
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, appendFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { homedir, tmpdir } from "node:os";
 import { join, dirname, delimiter, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -52,11 +53,45 @@ function filterTargets(ids, tg, up, need, binCheck = binOnPath, taskClass = "PUB
 }
 const POLICY_VERSION = (POLICY && POLICY.policy_version) || "unknown";
 
+// ---- 决策流水（best-effort、不泄密、不改权限）----
+// 每次调用追加一行到项目内 docs/model/JEV-DECISION-LOG.jsonl（可用 env JEV_DECISION_LOG 覆盖）。
+// 只记非敏感元数据（mode/decision/confidence/model/policy_version/digest 等）；不记 state 原文、不记 Key。
+// 目录不存在则静默跳过；任何异常绝不影响决策主流程与 stdout。
+const T0 = Date.now();
+function digest(s) { return createHash("sha256").update(s || "").digest("hex").slice(0, 16); }
+function logDecision(entry) {
+  try {
+    const rel = process.env.JEV_DECISION_LOG || join(process.cwd(), "docs", "model", "JEV-DECISION-LOG.jsonl");
+    if (!existsSync(dirname(rel))) return;
+    const now = new Date();
+    const line = JSON.stringify({
+      date: now.toISOString().slice(0, 10), ts: now.toISOString(),
+      project: process.cwd().split(/[\\/]/).filter(Boolean).pop() || null,
+      latency_ms: Date.now() - T0, ...entry,
+    });
+    appendFileSync(rel, line + "\n");
+  } catch { /* best-effort */ }
+}
+
 const ENDPOINT = process.env.ORCA_DECIDE_ENDPOINT || "https://api.typesafe.ai/v1/systemone";
 const MODEL = "jev-latest";
 const SCHEMA = "2.0";
 
+function firstNonOption() {
+  const raw = process.argv.slice(2);
+  for (let i = 0; i < raw.length; i++) {
+    const a = raw[i];
+    if (a === "--data-class" || a === "--runner") { i++; continue; }
+    if (a.startsWith("--data-class=") || a.startsWith("--runner=")) continue;
+    if (a.startsWith("-")) continue;
+    return a;
+  }
+  return null;
+}
+
 function fail(code, fallback = "ORCA_V2_1_EXISTING_LOGIC") {
+  const m = firstNonOption();
+  logDecision({ ok: false, error: code, fallback, mode: MODES[m] ? m : null, advisory_only: null });
   console.log(JSON.stringify({ ok: false, error: code, fallback, advisory_only: null, contract_version: "v1.5", policy_version: POLICY_VERSION }));
   process.exit(1);
 }
@@ -406,6 +441,9 @@ async function main() {
     if (st.deterministic.decision) det.decision = st.deterministic.decision;
     else det.decision = "SKIP_DETERMINISTIC";
     det.selected_probability = null; det.confidence = null; det.probabilities = null;
+    logDecision({ ok: true, mode, decision: det.decision, model: "deterministic-rule",
+      deterministic_shortcut: true, advisory_only: true, contract_version: "v1.5",
+      policy_version: POLICY_VERSION, data_class: det.data_class, input_digest: digest(JSON.stringify(state)), note: st.deterministic.reason });
     console.log(JSON.stringify(det));
     return;
   }
@@ -437,6 +475,10 @@ async function main() {
     usage: body.usage ?? null,
   };
   if (MODES[mode].extra) Object.assign(out, MODES[mode].extra(a, MODES[mode].q.risk?.criteria?.length ?? 0, { ...((st.gated) || {}), pool: prePool }));
+  logDecision({ ok: true, mode, decision: out.decision, confidence: st3.confidence,
+    selected_probability: st3.selected, model: out.model, requested_model: out.requested_model,
+    resolved_model: out.resolved_model, contract_version: "v1.5", policy_version: POLICY_VERSION,
+    data_class: out.data_class, advisory_only: true, input_digest: digest(st.text) });
   console.log(JSON.stringify(out));
 }
 

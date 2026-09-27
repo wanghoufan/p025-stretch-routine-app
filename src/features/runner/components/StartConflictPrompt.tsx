@@ -2,17 +2,8 @@ import { StyleSheet, View } from 'react-native';
 import { AppButton } from '../../../shared/components/AppButton';
 import { NoticeBanner } from '../../../shared/components/NoticeBanner';
 import { spacing } from '../../../shared/theme';
+import { useLanguage } from '../../../app/providers/LanguageContext';
 
-/**
- * Three-way conflict prompt (R017).
- *
- * Shown when the user tries to start routine B while routine A is still
- * running. Nothing changes until the user picks one of the three options:
- *
- *   1. 继续当前流程            -> keep A, go to the Runner
- *   2. 结束当前并开始新的       -> explicit replace, then start B
- *   3. 取消                    -> no change
- */
 export function StartConflictPrompt({
   currentRoutineName,
   onContinue,
@@ -26,21 +17,23 @@ export function StartConflictPrompt({
   onCancel: () => void;
   busy?: boolean;
 }) {
+  const { t } = useLanguage();
+
   return (
     <View testID="start-conflict-prompt">
       <NoticeBanner
         tone="warning"
-        title="已有正在进行的流程"
-        message={`「${currentRoutineName}」还在进行中，要先怎么处理？`}
+        title={t('conflict.title')}
+        message={t('conflict.message', { name: currentRoutineName })}
       />
       <AppButton
-        label="继续当前流程"
+        label={t('conflict.continue')}
         onPress={onContinue}
         disabled={busy}
         testID="conflict-continue"
       />
       <AppButton
-        label="结束当前并开始新的"
+        label={t('conflict.replace')}
         variant="danger"
         onPress={onReplace}
         disabled={busy}
@@ -48,7 +41,7 @@ export function StartConflictPrompt({
         style={styles.gap}
       />
       <AppButton
-        label="取消"
+        label={t('common.cancel')}
         variant="secondary"
         onPress={onCancel}
         disabled={busy}
