@@ -49,7 +49,6 @@ export interface UseRoutineDraftResult {
   loading: boolean;
   error: string | null;
   setName: (name: string) => void;
-  setCategory: (category: string[]) => void;
   setTrainingTypeId: (typeId: string | null) => void;
   setDefaultDurationSec: (seconds: number) => void;
   setDefaultTransitionSec: (seconds: number) => void;
@@ -173,9 +172,6 @@ export function useRoutineDraft(options: {
     setDraft((previous) => (previous ? { ...previous, name } : previous));
   }, []);
 
-  const setCategory = useCallback((category: string[]) => {
-    setDraft((previous) => (previous ? { ...previous, category } : previous));
-  }, []);
 
   const setTrainingTypeId = useCallback((trainingTypeId: string | null) => {
     setDraft((previous) => (previous ? { ...previous, trainingTypeId } : previous));
@@ -354,7 +350,6 @@ export function useRoutineDraft(options: {
     loading,
     error,
     setName,
-    setCategory,
     setTrainingTypeId,
     setDefaultDurationSec,
     setDefaultTransitionSec,
