@@ -103,11 +103,9 @@ export function RoutineEditorScreen() {
         name={draft.name}
         defaultDurationSec={draft.defaultDurationSec}
         defaultTransitionSec={draft.defaultTransitionSec}
-        category={draft.category}
         onChangeName={draftApi.setName}
         onChangeDefaultDuration={draftApi.setDefaultDurationSec}
         onChangeDefaultTransition={draftApi.setDefaultTransitionSec}
-        onChangeCategory={draftApi.setCategory}
       />
 
       <TrainingTypeSelector value={draft.trainingTypeId} onChange={draftApi.setTrainingTypeId} />

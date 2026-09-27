@@ -1,9 +1,10 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '../../../app/navigation/NavigationContext';
 import { useServices } from '../../../app/providers/ServicesContext';
 import { useSettings } from '../../../app/providers/SettingsContext';
 import { useLanguage } from '../../../app/providers/LanguageContext';
+import type { TrainingTypeInfo } from '../../../domain/statistics/history';
 import { useSpeech } from '../../../app/providers/SpeechContext';
 import { AppButton } from '../../../shared/components/AppButton';
 import { EmptyState, SectionTitle } from '../../../shared/components/Layout';
@@ -22,9 +23,40 @@ export function HomeScreen() {
   const services = useServices();
   const { tts } = useSpeech();
   const { settings } = useSettings();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const { routines, activeSession, loading, error, refresh } = useRoutines(services);
-  const routineGroups = useMemo(() => groupRoutines(routines), [routines]);
+
+  // Home groups follow the training-type table (TASK-021-F2), so Home and the
+  // statistics page always agree. Read failure degrades to "every routine is
+  // unclassified" instead of hiding the list.
+  const [trainingTypes, setTrainingTypes] = useState<TrainingTypeInfo[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    services.history
+      .listTrainingTypes()
+      .then((loaded) => {
+        if (!cancelled) setTrainingTypes(loaded);
+      })
+      .catch(() => {
+        if (!cancelled) setTrainingTypes([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [services]);
+
+  const typeNames = useMemo(() => {
+    const names: Record<string, string> = {};
+    for (const type of trainingTypes) {
+      names[type.typeId] = language === 'zh' ? type.nameZh : type.nameEn;
+    }
+    return names;
+  }, [trainingTypes, language]);
+
+  const routineGroups = useMemo(
+    () => groupRoutines(routines, typeNames, t('stats.type.unclassified')),
+    [routines, typeNames, t],
+  );
 
   const openRunner = useCallback(() => navigation.navigate('Runner', undefined), [navigation]);
   const startFlow = useStartRoutine(services, tts, settings, openRunner);
@@ -136,9 +168,7 @@ export function HomeScreen() {
           <SectionTitle>{t('home.routineCount', { count: routines.length })}</SectionTitle>
           {routineGroups.map((group) => (
             <View key={group.key} testID={group.key}>
-              <SectionTitle>
-                {`${t(`home.scene.${group.scene}`)} (${group.count})`}
-              </SectionTitle>
+              <SectionTitle>{`${group.name} (${group.count})`}</SectionTitle>
               {group.routines.map((summary) => (
                 <RoutineCard
                   key={summary.id}
@@ -146,7 +176,7 @@ export function HomeScreen() {
                   hasActiveSession={activeSession?.routineId === summary.id}
                   onOpen={() => openRoutine(summary.id)}
                   onStart={() => startRoutine(summary.id)}
-                  badge={group.scene === '核心' ? summary.difficulty : undefined}
+                  badge={group.scene === 'CORE' ? summary.difficulty : undefined}
                   scene={group.scene}
                 />
               ))}
