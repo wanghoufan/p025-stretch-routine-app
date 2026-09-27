@@ -235,3 +235,18 @@
 - P2：`training_type_id IS NULL` 无法区分「从未赋型」与「用户主动清空」。Reviewer 查实 v5 只在升级那次启动执行（`runMigrations` 对 `version<=current` 跳过，生产无重置 `user_version` 路径）⇒ **用户之后选的未分类永久保留**，暴露面≈0，故**不加标记列**；若日后要求「永久尊重未分类」走 Change C。
 - P3：0ms 会话完成页显示「用时 0秒」（事实准确，观感待议）；`listTrainingTypes()` 未过滤 `is_active`；i18n 死键 `stats.unit.*` 与 `statsFormat.ts` 重复实现。
 - 治理：TASK-021 的 supervisor 复检实派本窗口 `codebuddy/glm-5.3-flash`，与 override supervisor 行不符，**系用户直接指派（换谁用户定）**，已在 DISPATCH-LOG 留痕待追认。
+
+### 语音播报与「离线 TTS」现状（2026-09-27 调研后记录，用户决定暂不处理）
+
+**现状**：12 Pro 上系统**只有小米 mibrain 一个 TTS 引擎**（`pm query-services -a TTS_SERVICE` 实测；`com.google.android.tts` 未安装），其合成**走网络**（logcat 可见 `AivsSDK ... http://119.147.123.233:80`）。**联网时播报正常。**
+
+**两条必须记住的坑（防止以后重复调研/踩坑）**：
+
+1. **新设备可能「无声」且无任何提示**——若 `settings get secure tts_default_synth` 为空（`null`），`expo-speech` 无处路由，会**静默无声**（12 Pro 上就是这个状态，已通过 `settings put secure tts_default_synth com.xiaomi.mibrain.speech` ＋ `tts_default_lang zh-CN` 修复）。**排查任何「没声音」先查这一条**。另：MIUI 录屏（`com.miui.screenrecorder`）与小米投屏（`com.xiaomi.mirror`）运行时占用 `remote_submix` 会抢走扬声器音频，先杀掉这两个进程；再按音频铁律查 USB 线。
+2. **历史记录里的「Sherpa xiao_ya 神经音，用户初听通过」不能用于商用**——`vits-piper-zh_CN-xiao_ya-*` 源自 `rhasspy/piper-voices`，其 MODEL_CARD 标注数据源为 BZNSYP **Non-commercial use**。**任何 int8/fp32 变体都不可商用**，不要因为「它小、用户初听通过」就想再用回来。
+
+**若将来要做真离线**（用户 2026-09-27 决定「算了先这样，不折腾了」，此项为挂账非任务）：
+- **mibrain 无法离线**（AIVS 是云服务，MIUI 官方 TTS FAQ 也没有离线语音包入口）。
+- 唯一零体积路径是引导用户装 Google TTS ＋ 中文离线包，但国行下载不到中文包、需重签名，UX 代价高。
+- 自带引擎（sherpa-onnx ＋ AISHELL-3）体积代价约 **+55MB**（arm64 单包 45→100MB），且 **AISHELL-3 商用授权存在矛盾**（openslr 标 Apache-2.0，PaddleSpeech 附注「非商用」），**须先书面确认才能开工**；eSpeak 是 GPL-3.0，中文为 formant 机械音，不适合做动作指令主链路。
+- 附带已发现的既有隐患（未修，可随时立项）：`src/services/tts/expoSpeechSpeaker.ts:19` 把 `onStopped` 当作 `onDone`（被 stop 与念完语义混同），且 `expo-speech` 的 Android 实现**丢弃了 TTS errorCode**，导致「合成失败」会被静默吞掉、表现为「该播的没播但 App 一切正常」——这正是离线问题不容易被发现的直接原因。
