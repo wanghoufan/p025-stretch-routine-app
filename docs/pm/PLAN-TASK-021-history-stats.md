@@ -1,6 +1,6 @@
 # PLAN｜TASK-021 历史统计（Round 3 收口，待 Research Reviewer 复审）
 
-> 【neat-freak 2026-09-27 补注｜仅加收工状态指针，正文按写作时快照保留】本卡规划已**全部落地并放行**：`PRODUCT_PLAN_V1.3` 已建立并成为 `DEV_BASELINE`（取代本卡过渡口径「DEV_BASELINE 仍为 V1.2」）；Task Breakdown 各项全部完成——R006 PASS → B1～B4＋F1 → 真机 QA 两轮全过 → supervisor 复检放行（见 HANDOFF「TASK-021 历史统计功能」章节与 `docs/qa/task021-真机第一轮.md`、`docs/qa/task021-r006.md`）。真机验收设备以 **Redmi Note 12 Pro（`indq5xfi6hovay4d`）** 为准，正文中的 xagapro 为写作时旧口径；种子「既存同名不赋型」口径已被 F1 收窄（存量回填允许名字匹配，见 V1.3 实施补注）。
+> 【neat-freak 2026-09-27 补注｜仅加收工状态指针，正文按写作时快照保留】本卡规划已**全部落地并放行**：`PRODUCT_PLAN_V1.3` 已建立并成为 `DEV_BASELINE`（取代本卡过渡口径「DEV_BASELINE 仍为 V1.2」）；Task Breakdown 各项全部完成——R006 PASS → B1～B4＋F1 → 真机 QA 两轮全过 → supervisor 复检放行（见 HANDOFF「TASK-021 历史统计功能」章节与 `docs/qa/task021-真机第一轮.md`、`docs/qa/task021-r006.md`）。真机验收设备以 **Redmi Note 12 Pro（`indq5xfi6hovay4d`）** 为准，正文设备口径已于 2026-09-27 全量统一；种子「既存同名不赋型」口径已被 F1 收窄（存量回填允许名字匹配，见 V1.3 实施补注）。
 
 - DEV_BASELINE：当前仍为 `PRODUCT_PLAN_V1.2`；本卡不是新基线。
 - CHANGE_REQUEST：**C**。
@@ -29,7 +29,7 @@
 - [ ] COMPLETED 与实际动作时间 >0ms 的 STOPPED 原子归档并清活动会话，`session_id` 幂等；持久化成功后才显示“已计入”。失败保留可重试状态。
 - [ ] 首发提供全部与分类累计、最近 10 条、单条删除及设置页清空统计；旧历史不可回溯，演示数据不入账。
 - [ ] 完成页与统计页统一实际动作时间；完成页和 Runner 接双语，并修正 Runner 停止确认假文案。
-- [ ] v4 additive migration、隔离库测试、类型检查、全量测试、xagapro 真机新包验收、Reviewer/QA/Supervisor 全链通过。
+- [ ] v4 additive migration、隔离库测试、类型检查、全量测试、12 Pro（indq5xfi6hovay4d）真机新包验收、Reviewer/QA/Supervisor 全链通过。
 
 ## In Scope
 
@@ -42,7 +42,7 @@
 
 ### 2. R006 前置、有效时长与恢复（HD-9=A）
 
-- `TASK-021-R006` 责任链：Builder 实作 Android 本地真实单调时钟 `nowElapsedMs()`（如 `elapsedRealtime()`）和可信 `getBootCount()`／等效 boot 身份；Code Reviewer 审源与 JS 接线；QA 在 xagapro **新构建真机包**上验证；Supervisor 复检，TM 记 PASS。Fake clock 单测不算闸门证据。
+- `TASK-021-R006` 责任链：Builder 实作 Android 本地真实单调时钟 `nowElapsedMs()`（如 `elapsedRealtime()`）和可信 `getBootCount()`／等效 boot 身份；Code Reviewer 审源与 JS 接线；QA 在 12 Pro（indq5xfi6hovay4d）**新构建真机包**上验证；Supervisor 复检，TM 记 PASS。Fake clock 单测不算闸门证据。
 - **R006 DoD**：同一运行会话分别把系统时间前拨、后拨 **±1h 与 ±1d**，倒计时不回跳、不瞬间跳过阶段或直接完成、不丢会话，已跑动作时间不随墙钟跳变；覆盖暂停／恢复和后台回前台。`force-stop` 后同 boot 重开能可信恢复且不重复计时；真重启后正确识别 boot 改变，不把旧 elapsed 值误作本次运行，并给出可解释结果。记录包版本、设备、操作顺序、倒计时与恢复状态。任何一项失败即闸门 FAIL，B1～B5 不开工。
 
 - **动作有效时长**只算动作阶段实跑毫秒；暂停与转场排除。`+10s` 只计跑到的部分，Skip 截至跳过瞬间，Previous 重练真实时间另计，双侧左右分别计。`completedPhaseMs` **含转场且 Previous 会按计划值重置**，完成页 `routineElapsedMs` 不能回推统计。这条保留上一轮正确判断。
@@ -66,7 +66,7 @@
 - **预期排除**（版本切换 `stats_eligible=0`、0ms、ERROR 或规则内不可计时段）使用中性、低权重的操作处说明，如“本次没有可计入的动作时间”“更新前开始的训练不计入新统计”；不弹全局警告、不产生“合计可能低于实际”的统计缺口标记。
 - **异常丢失**（进程死亡导致不可恢复、boot 不符、12h stale、损坏／越界、不可信恢复、改钟异常、归档失败）先持久化原因和发生时间，再清可清的活动行；归档失败保留会话和重试入口。首页或统计页醒目但可关闭地提示“上次训练有一段未能计入统计”，附简明原因。统计页只在存在**未关闭的异常通知**时显示“合计可能低于实际练习”；关闭仅隐藏解释，不改累计。不知道丢失毫秒数就不伪造。
 - 通知载体定为 v4 独立小表 `stats_anomaly_notice`（原因码、发生时间、已读／关闭位），纳入 migration 和 `resetSchema()`；预期排除不写该表。中英文案由原因码映射，不能只用易失 toast。通知持久化失败不得静默清活动行。
-- xagapro 真机：起一场 → `force-stop`／重开 → 核同 boot 恢复或可见异常；再从首页点别的流程，异常仍须可见。真重启、12h stale、损坏／越界用受控测试补足；两类措辞与统计 caveat 分流有集成断言。
+- 12 Pro（indq5xfi6hovay4d）真机：起一场 → `force-stop`／重开 → 核同 boot 恢复或可见异常；再从首页点别的流程，异常仍须可见。真重启、12h stale、损坏／越界用受控测试补足；两类措辞与统计 caveat 分流有集成断言。
 - 首页“我的流程”内容区加“历史统计”入口，进入独立页面；**不新增第 4 个常驻 tab**。统计页展示全部及分类累计、最近 10 条、单条删除、混合流程分类局限，并以中英双语声明“**数据仅保存在本机，不上传**”。无历史时说明旧记录不可回溯；卸载或清 App 数据会丢失本机记录，不设自动保留期／数量上限。
 - **可见行为变更 HD-6=A**：完成页原“用时”取含转场 `routineElapsedMs`；本轮改为只显示与统计**同一累计源、同一单位和舍入规则的实际动作时间**，不含暂停和转场，保证两页数字一致。升级后完成页数字可能变小，这是显示口径迁移，不是用户数据被改坏；页面简短说明“只统计实际动作时间，暂停和转场不计”，中英双语且真机可见。Runner 顶部若保留含转场的经过时间，必须明标“流程已用（含转场）”，不可冒称统计值。
 - 完成页提交成功才报“已计入统计”，失败报“尚未计入，请重试”；STOPPED >0ms 的返回首页反馈及最近记录如实标“提前结束”。`RunnerScreen.tsx:57` 的“已经完成的部分不会保存”改为“若已有实际动作时间，提前结束也会计入统计”，对 0ms 不作假承诺。
@@ -76,16 +76,16 @@
 
 | 项 | 可验收证据 |
 |---|---|
-| R006 开发闸门 | 真 monotonic／boot 接线；xagapro 新包改钟 ±1h／±1d 时倒计时不回跳／跳变／丢会话，暂停、前后台恢复正常；同 boot 进程重启与真重启结果可解释；Reviewer、QA、Supervisor PASS 且 TM 记账后才派 B1～B5。 |
+| R006 开发闸门 | 真 monotonic／boot 接线；12 Pro（indq5xfi6hovay4d）新包改钟 ±1h／±1d 时倒计时不回跳／跳变／丢会话，暂停、前后台恢复正常；同 boot 进程重启与真重启结果可解释；Reviewer、QA、Supervisor PASS 且 TM 记账后才派 B1～B5。 |
 | 有效时长 | 暂停、转场、未跑到的 +10s 不计；Skip、Previous、双侧、跨多边界、后台恢复逐段无漏重；完成页与统计页显示同一实际动作时间。 |
 | 归档 | COMPLETED、STOPPED >0ms 事务归档；STOPPED 最近标“提前结束”；0ms／ERROR 不计；故障不清会话／不报成功；重复 `session_id` 仅一条；替换先处置旧场。 |
 | B 档流程分类 | 编辑页每流程选一类；9 个种子定义逐条预置；既存无法安全识别的示范行和自建行保留未分类；会话类型快照不随之后编辑改变；四类（含未分类）之和＝总数；混合流程局限可见。 |
 | **D 档取舍（P1-B 留痕）** | **已评估并由用户否决，不属首发实施或验收分支。** D 仅给总时长，不能回答三类各多久，日后也无法精确回拆旧记录。若将来另起 Change C 重审，D 的独立 DoD 才是：单历史表、非负且单调 `total_step_ms`、稳定最近 10 条排序、无类型列／分类明细；不得用它替代本轮 B 档。 |
 | 删除与隔离 | 统计页删单条、设置页二次确认清全部后累计立即正确；`seed_examples_cleared`、用户真实动作库／流程／活动会话不受影响；清示范流程不清统计。 |
 | 提示分流 | `stats_eligible=0`、0ms、ERROR 为中性局部说明，统计 caveat 不出现；进程／boot／stale／损坏／归档失败为持久化异常提示，关闭只隐藏提示；通知写失败不能静默清行。 |
-| 旧库与日期 | v1/v2/v3→v4 保留流程／设置与旧活动会话；v1 snapshot 解为未分类；旧场不补算；算术日期单测覆盖跨午夜、时区变化、负 offset；xagapro 验旧记录不重排／不崩。 |
+| 旧库与日期 | v1/v2/v3→v4 保留流程／设置与旧活动会话；v1 snapshot 解为未分类；旧场不补算；算术日期单测覆盖跨午夜、时区变化、负 offset；12 Pro（indq5xfi6hovay4d）验旧记录不重排／不崩。 |
 | 页面与双语 | 首页入口、总数＋分类＋最近 10 条、旧历史不可回溯、本机不上传声明；完成页和 Runner 中英即时切换，停止假话已改；完成页数字变化说明真机可见，触控 ≥48dp。 |
-| 质量 | `npm run typecheck`、`npm test -- --runInBand` exit 0；隔离库迁移／恢复演练；xagapro 新包／新 bundle 覆盖安装、离线运行；Code Reviewer／QA／Supervisor 通过。 |
+| 质量 | `npm run typecheck`、`npm test -- --runInBand` exit 0；隔离库迁移／恢复演练；12 Pro（indq5xfi6hovay4d）新包／新 bundle 覆盖安装、离线运行；Code Reviewer／QA／Supervisor 通过。 |
 
 ## Out of Scope
 
@@ -100,13 +100,13 @@
 | Task ID | Priority | Role | Status | Notes / DoD |
 |---|---|---|---|---|
 | TASK-021-C | P0 | TM／Planner／Research Reviewer／Human | IN_PROGRESS | 本卡 Round 3 复审→V1.3 草案→Readiness Gate→Human Gate；获批并明确进入开发后才派实现。 |
-| TASK-021-R006 | **P0，B1～B5 串行硬前置** | **Builder（Android 切片）→Code Reviewer→QA 真机→Supervisor→TM** | NOT_STARTED | 真 monotonic＋boot 接线；xagapro 新包改钟 ±1h／±1d、同 boot 进程重启、真重启 DoD 通过并记 PASS。**FAIL／未验证＝B1～B5 不开工。** |
+| TASK-021-R006 | **P0，B1～B5 串行硬前置** | **Builder（Android 切片）→Code Reviewer→QA 真机→Supervisor→TM** | NOT_STARTED | 真 monotonic＋boot 接线；12 Pro（indq5xfi6hovay4d）新包改钟 ±1h／±1d、同 boot 进程重启、真重启 DoD 通过并记 PASS。**FAIL／未验证＝B1～B5 不开工。** |
 | TASK-021-B1 | P0 | Builder→Code Reviewer→QA→Supervisor | BLOCKED_BY_R006 | 结算伪码先审；v4、标量账本、事务归档、STOPPED>0ms、异常通知表；故障注入与幂等。 |
 | TASK-021-B2 | P0 | Builder→Code Reviewer→QA→Supervisor | BLOCKED_BY_R006 | 查询、四类及总累计、最近 10 条、首页入口与独立统计页；离线、双语、48dp。 |
 | TASK-021-B3 | P0 | Builder→Code Reviewer→QA→Supervisor | BLOCKED_BY_R006 | 9 个种子定义人工预置类型、流程编辑选择、既存行不猜；`seed_examples_cleared` 回归。 |
 | TASK-021-B4 | P0 | Builder→Code Reviewer→QA→Supervisor | BLOCKED_BY_R006 | 完成页实际动作时间与统计一致；完成页＋Runner 双语、STOPPED 假话修正；真机验可见变化。 |
 | TASK-021-B5 | P0 | Builder→Code Reviewer→QA→Supervisor | BLOCKED_BY_R006 | 统计页删单条、设置页清全部与二次确认；只动统计数据，不误伤真实流程和动作库。 |
-| TASK-021-QA | P0 | QA | NOT_STARTED | 每 session 能力预检先 PASS；隔离库／全量测试、xagapro 新包真机、提示分流、改钟与清除安全逐项取证。 |
+| TASK-021-QA | P0 | QA | NOT_STARTED | 每 session 能力预检先 PASS；隔离库／全量测试、12 Pro（indq5xfi6hovay4d）新包真机、提示分流、改钟与清除安全逐项取证。 |
 | TASK-021-S | P0 | Supervisor／TM | NOT_STARTED | 复检依赖闸门、Review/QA 证据与 DoD；全链通过后才可报告完成／发布。 |
 
 ## Risks
