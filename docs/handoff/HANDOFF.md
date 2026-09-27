@@ -14,9 +14,9 @@
 - Stage ID（本阶段叫什么）：stretch-app-v11-ambient
 - 剩 P0（没完的才列，多一条都不行）：
   - P0-5：native R004-R006 / R022-R034（FGS / Doze / Android 版本矩阵）待排期；本地构建链已通，可随时开工
-- 当前 Task（正干到某）：**TASK-021 历史统计**（Phase2 DEVELOP，DEV_BASELINE=PRODUCT_PLAN_V1.3）。**TASK-021-R006 已完成**：修好真单调时钟（`SystemClock.elapsedRealtime()`，经本地 Expo 模块 `modules/stretch-runtime`）与真 boot 身份（`Settings.Global.BOOT_COUNT`）；code-reviewer 两轮（R1 FAIL/P0=0/blocking P1=1 → 回炉修降级静默+混源纪元 → R2 **PASS/P0=0/blocking P1=0**，明确『统计功能可以开工』）；12 Pro（indq5xfi6hovay4d）真机已验 +1h/−1h 跳钟『已用』连续、会话未丢。**进行中：TASK-021-B1 数据层**（v4 迁移＋训练类型表＋归档逻辑）。产出：计划 `docs/pm/PLAN-TASK-021-history-stats.md`、新基线 `docs/pm/PRODUCT_PLAN_V1.3.md`、复核 `docs/review/RESEARCH_REVIEW-task021-history-stats.md`（R1/R2/R3）与 `docs/review/CODE_REVIEW-task021-r006.md`（R1/R2）。
+- 当前 Task（正干到哪）：**无进行中任务**。**TASK-021 历史统计已全链收工并放行**（supervisor 六项复检 PASS / P0=0 / 打回计数 0/2）。构成：R006 串行前置（真单调时钟＋真 boot 身份）→ B1 数据层 → B2 界面 → B3 编辑器 → B4 完成页 → F1 存量回填，每环均 code-reviewer（含回炉复审）P0=0 / blocking P1=0；真机 12 Pro（indq5xfi6hovay4d）两轮 QA，**第一轮抓出 P0「存量 9 个种子流程全落未分类」→ F1 修复 → 第二轮全过**。**功能要点**：首页入口进统计页（累计有效时长＋按训练类型分类＋最近 10 条，可删单条、设置页可清空且与「清除示范数据」零干扰、数据仅存本机）；训练类型表驱动可扩展（内置 拉伸放松／热身／核心训练，9 个种子流程按 V1.3 映射预置，用户自建默认未分类）；完成页「用时」与统计页同源同口径（实际动作时间，不含暂停/转场）；提前结束计入并标注；异常丢失有醒目提示、预期排除只有中性说明。**已知取舍**：流程级分类 ⇒ 混合流程整场算一类（编辑页已如实告知）；老版本已 `clear()` 的历史**不可回溯**（空状态如实说明「从新版本开始」）。证据：`docs/pm/PRODUCT_PLAN_V1.3.md`、`docs/pm/PLAN-TASK-021-history-stats.md`、`docs/qa/task021-真机第一轮.md`、`docs/qa/task021-r006.md`、`docs/review/CODE_REVIEW-task021-{b1,b2,b3,b4,f1,r006}.md`、`docs/review/RESEARCH_REVIEW-task021-history-stats.md`。
 - 执行链/Session（仅真 resume 通道填；TM 只记录/引用，不手造 ID）：builder 走 opencode 通道 `opencode-go/deepseek-v4.1-flash`（旧 codebuddy 通道作废；TASK-018 同链续 session 返工 3 轮）；supervisor 走 opencode `opencode-go/muse-spark-1.3-contributor`；planner/product-reviewer/senior 走 codex；code-reviewer/experience-recorder/neat-freak 本窗口 subagent；qa 本窗口直派 + adb/Expo 走本窗口 bash 直驱
-- 账本：`docs/model/TASK-MODEL-LOG.jsonl` **23 行**、`docs/model/DISPATCH-LOG.jsonl` **35 行**，两文件 schema 第二道校验均 exit 0（supervisor 已复检；neat-freak 2026-09-27 复核 `node scripts/model/check-ledger.mjs docs/model` 仍 exit 0）
+- 账本：`docs/model/TASK-MODEL-LOG.jsonl` **40 行**、`docs/model/DISPATCH-LOG.jsonl` **61 行**，两文件 schema 第二道校验均 exit 0（supervisor 已复检；neat-freak 2026-09-27 复核 `node scripts/model/check-ledger.mjs docs/model` 仍 exit 0）
 - 未闭环评审意见（还没改的）：
   - 已 CLOSED：TASK-018 的 P1-1（可见归属缺失）、reviewer P2-1（两条 DoD 断言缺失）、qa P2（搜索态两次点按）、qa P3-1（单字 chip 宽 42.5dp<48）、P3-5（陈旧注释）——均随 B-4 ⑨⑩⑪ 与对应集成断言闭环，⑫ 真机复验通过
   - 挂账（**非阻塞**，不属 B-4 范围，详见 `docs/review/CODE_REVIEW-task018-dynamic-filter.md`）：
@@ -202,3 +202,32 @@
 - **顺手修掉的既有 P1**：`app.json` `versionCode` 2→3。此前有人手改未跟踪的 `android/app/build.gradle` 为 3 未回写真源，prebuild 又重置为 2，导致装机一律 `INSTALL_FAILED_VERSION_DOWNGRADE`（`-d` 也不放行）。口径已落 `docs/sop/android.md` §5.1。
 - **挂账非阻塞**：①`app.json` 顶层 `splash` 与插件 props 双写（权威源＝插件 props，口径同落 §5.1）；②`assets/splash-icon.png`（17KB Expo 靶心图）原为零引用孤儿、会被 `assets/**/*` 打进包——**已清（2026-09-27 neat-freak，同批删除 `assets/icon.png`、`assets/android-icon-background/foreground/monochrome.png` 共 5 个 Expo 模板默认图）**；③splash 期间底部系统导航栏约 130ms 为纯黑（Android 12+ 固有行为）；④「Motion Core 拉伸」字样因 DB 初始化 <100ms 未被看到，**要不要加 splash 最短显示时长属观感决策，未擅自加**；⑤splash 图标自带浅蓝圆角方块底，在深蓝上可见方形边界（素材级微调）。
 - **出包铁律（新增）**：`android/` 已存在时 `expo run:android` 不重跑 prebuild（2026-09-21 图标修复已踩过同坑），**出包前必须先 `npx expo prebuild --platform android` 再 gradle**，否则按旧 versionCode 打包并误判成"修复没生效"。
+
+---
+
+## TASK-021 历史统计功能（2026-09-27，Change C，全链收工放行）
+
+- **用户诉求**：「增加历史统计功能，比如总共拉伸了长时间、放松了多长时间、核心训练了多长时间。」随后明确**真机只用 Redmi Note 12 Pro（`indq5xfi6hovay4d`），不要用别的手机**。
+- **规划**：Planner 三轮 ＋ Research Reviewer 三轮复审。R1 判 **FAIL/P0=3/Readiness 58**（把「改钟不影响时长」当已验证事实、跨 boot 丢弃实为跨进程零告知、Change 等级误判 B——`PRODUCT_PLAN_V1.2` 在 `:36/:68/:154` 三处明文排除历史查询）→ R2 FAIL(轻)/blocking P1=3 → **R3 PASS/P0=0/blocking P1=0**。用户拍板 12 项决策后落 `PRODUCT_PLAN_V1.3.md`（Readiness 91/100，补华为/小米官方外部证据），Human Gate 批准为新 `DEV_BASELINE`，`CHANGE_REQUEST: C → NONE`。
+- **R006 串行硬前置（先修计时器，HD-9 用户拍板）**：`MonotonicClock` 原为 `Date.now()`、`BootInfo.bootCount` 原为进程身份近似 → 改钟会让统计多算/整场丢弃、任何进程死亡都被判重启而静默丢弃。新增本地 Expo 模块 `modules/stretch-runtime`（Kotlin）读 `SystemClock.elapsedRealtime()` ＋ `Settings.Global.BOOT_COUNT`。真机 12 Pro：±1h/±1d 四组跳钟（±1d **精确 4s＝真实 4s**）、同 boot 跨进程恢复精确追赶（误差<1s）、真重启 T7（`boot_count` 26→27 且正确丢弃）。**统计功能严格在 R006 判 PASS 之后才开工。**
+- **开发五环**（各过 code-reviewer，P0=0 / blocking P1=0）：B1 数据层（v4 迁移＋`training_types`＋`session_history`/`steps`/`stats_anomaly_notice`；**归档算法内嵌状态机转移**，`sum(明细)==总计` 是构造保证；原子事务＋幂等＋封闭枚举分流）／B2 界面／B3 编辑器／B4 完成页／F1 存量回填。
+- **真机 QA 第一轮抓出 P0**：升级后 9 个**存量**种子流程全落「未分类」⇒ 分类维度对存量用户等于失效。根因＝`repairSeededRoutines` 在 `missing.length===0` 时早退，永不回填训练类型。**F1 修复**：新增 v5 迁移按种子流程名一次性回填（**只填 NULL、不覆盖用户已设**），并把「不凭名字猜」口径**收窄为「实时新增/复制不猜」**。第二轮复验：三桶各 11秒/1 次、未分类桶消失、分类合计==总计、编辑器「拉伸放松」已自动选中、English 全量即时生效。
+- **质量**：`typecheck` 0 错；**47 套件 / 352 用例全绿**（R006 后基线 38/282 → 只增不减、零旧测试被改绿）；`check-ledger.mjs` **LEDGER-OK**。
+
+### 必须如实告知用户的三条
+
+1. **老历史不可回溯**：V1 至今的会话在 `active_session` 单例表里被 `clear()` 直接删除，**无法补算**。统计从本版装上后重新累积，空状态如实写「统计从新版本开始记录；此前练习过的历史已无法找回」。
+2. **混合流程整场算一类**：采用**流程级分类**（HD-1=B），一个流程里混了拉伸与核心动作时整场记入所选类型，分类数字会有偏差——**编辑页与统计页都已如实告知**。升级到步骤级需另立需求（旧流程级历史无法精确回拆）。
+3. **完成页「用时」数字会变小**：按 HD-6 改为**实际动作时间**（不含暂停/转场），好处是完成页与统计页数字永远一致，代价是用户会看到数字变小——不是数据坏了。
+
+### 设备侧发现（不在本任务范围，已记录）
+
+- **12 Pro 原先没有默认 TTS 引擎**（`tts_default_synth=null`）导致 App 静默无声；且 `com.miui.screenrecorder` / `com.xiaomi.mirror` 运行时占用 `remote_submix` 抢走扬声器音频。已设 `com.xiaomi.mibrain.speech` / `zh-CN` 并停掉两进程解决。**新设备需一次性设置，非本仓代码问题。**
+- **mibrain 引擎的 TTS 合成走网络**（logcat 可见 `AivsSDK ... http://119.147.123.233:80`），与项目「本地优先、离线可用」原则冲突；离线播报需系统集成语音包。**已记为待处理项。**
+
+### 遗留挂账
+
+- P2：真机未取到「完成页用时 vs 统计页数字」的**直接并排对照**（三个流程都以提前结束落点、按 B4 口径直达首页不经完成页），需一次完整跑完的流程；代码级与仓储级证据已足（同一列 `total_step_ms`、两端共用 `formatStatsDuration` 统一 `Math.round`、测试真跑到仓储层断言 `getTotals()==={20000,1}`）。
+- P2：`training_type_id IS NULL` 无法区分「从未赋型」与「用户主动清空」。Reviewer 查实 v5 只在升级那次启动执行（`runMigrations` 对 `version<=current` 跳过，生产无重置 `user_version` 路径）⇒ **用户之后选的未分类永久保留**，暴露面≈0，故**不加标记列**；若日后要求「永久尊重未分类」走 Change C。
+- P3：0ms 会话完成页显示「用时 0秒」（事实准确，观感待议）；`listTrainingTypes()` 未过滤 `is_active`；i18n 死键 `stats.unit.*` 与 `statsFormat.ts` 重复实现。
+- 治理：TASK-021 的 supervisor 复检实派本窗口 `codebuddy/glm-5.3-flash`，与 override supervisor 行不符，**系用户直接指派（换谁用户定）**，已在 DISPATCH-LOG 留痕待追认。
