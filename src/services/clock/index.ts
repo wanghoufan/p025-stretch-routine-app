@@ -8,4 +8,4 @@
 export type { WallClock } from './WallClock';
 export { SystemWallClock, FakeClock } from './WallClock';
 export type { MonotonicClock } from './MonotonicClock';
-export { ExpoGoMonotonicClock, FakeMonotonicClock } from './MonotonicClock';
+export { DeviceMonotonicClock, FakeMonotonicClock } from './MonotonicClock';

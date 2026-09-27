@@ -1,3 +1,5 @@
+import { nativeBootCount } from './StretchRuntime';
+
 /**
  * Boot / process identity port (R012, R032).
  *
@@ -5,31 +7,46 @@
  * "the process restarted". Only in the first case may a stored active session
  * be continued automatically.
  *
- * ── Native TODO (deferred to the build/native channel, R004–R006) ───────────
- * The real implementation reads a per-boot counter from the
- * `modules/stretch-runtime` local Expo module (Android boot count /
- * elapsedRealtime boot identity).
+ * ── Source (R006) ──────────────────────────────────────────────────────────
+ * The production source is the local `stretch-runtime` Android module, which
+ * returns `Settings.Global.BOOT_COUNT` — the system's own per-boot counter:
+ *   - constant for the entire lifetime of one boot, so a process killed by the
+ *     OS / a crash / memory pressure and restarted still sees the same value and
+ *     the session can be continued;
+ *   - incremented only by a real device reboot, so a session whose monotonic
+ *     origin belongs to a previous boot is rejected;
+ *   - unrelated to the wall clock, so changing the system time does not look
+ *     like a reboot.
  *
- * Until then `ExpoGoBootInfoProvider` approximates it with a value captured
- * once per JS context at import time. This is conservative by construction:
- *   - while the process lives (background, lock screen, Activity recreation,
- *     Recents swipe with the process still alive) the value is stable, so the
- *     session can be continued;
- *   - after a real process restart the JS context is recreated, the value
- *     changes, and recovery treats it as a boot mismatch -> discard +
- *     no automatic playback (fail-safe).
- * It never *under*-detects a restart, which is the safe direction.
+ * Where that module is absent (Expo Go, Jest, web) the provider falls back to a
+ * per-process identity. That is the conservative direction — a restart is then
+ * indistinguishable from a reboot and the session is discarded without
+ * playback — and it is deliberately **not** wall-clock derived, so it can never
+ * make a clock change look like a stable identity.
  */
 export interface BootInfoProvider {
   getBootCount(): number;
 }
 
-export class ExpoGoBootInfoProvider implements BootInfoProvider {
-  // TODO(native R006): replace with `StretchRuntime.getBootCount()`.
-  private readonly bootCount = Date.now();
+/**
+ * Process-unique identity for runtimes without the native module. Random rather
+ * than time derived: a clock change must not be able to hold this value stable
+ * across two processes, and two processes must not accidentally agree it is the
+ * same boot.
+ */
+function createProcessIdentity(): number {
+  return Math.floor(Math.random() * 0x7ffffffe) + 1;
+}
+
+/**
+ * Production boot identity: the platform boot counter, falling back to the
+ * per-process identity when the native module cannot supply one.
+ */
+export class DeviceBootInfoProvider implements BootInfoProvider {
+  private readonly processIdentity = createProcessIdentity();
 
   getBootCount(): number {
-    return this.bootCount;
+    return nativeBootCount() ?? this.processIdentity;
   }
 }
 

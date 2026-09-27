@@ -5,16 +5,16 @@
 ## 机器字段（治理用，勿删）
 
 - Captured at（YYYY-MM-DD HH:MM）：2026-09-19 12:40（TASK-018 收工·大交接冻结）
-- PROJECT_PHASE：**WAITING_HUMAN_APPROVAL**（TASK-021 历史统计 Change C 局部受控重开：Planner 三轮＋Research Reviewer 三轮复审已收敛，Round 3 判 PASS／P0=0／blocking P1=0，可进 Human Gate。**TM 已停循环找人，未获用户明确批准前禁派 Builder、禁动业务代码**）
-- PLAN_VERSION：PRODUCT_PLAN_V1.2
-- PLAN_READINESS_SCORE：94
-- PLAN_GATE：**READY_FOR_HUMAN_REVIEW**（TASK-021 历史统计卡待用户批准；批准后同改 PLAN_VERSION=V1.3／DEV_BASELINE=PRODUCT_PLAN_V1.3／PROJECT_PHASE=DEVELOP／CHANGE_REQUEST=NONE）
-- DEV_BASELINE：PRODUCT_PLAN_V1.2
-- CHANGE_REQUEST：**C**（TASK-021 历史统计为新增功能＋改已批准的 PRODUCT_PLAN_V1.2 产品目标：V1.2 在 `:36`/`:68`/`:154` 三处明文排除历史会话查询，Research Reviewer 独立复核判定为 C 而非 B。走局部受控重开：局部暂停本任务 → Sol Planner 修订 → Research Reviewer 复审 → 新 `PRODUCT_PLAN_V1.3` 增量草案（把历史统计移入 Functional Scope）→ Human Approval → 新 Plan 版本成为新 `DEV_BASELINE` 回 DEVELOP。不全量重跑 V1.1，不动 native hardening 挂账 P0-5）
+- PROJECT_PHASE：**DEVELOP**（用户 2026-09-27 于 Human Gate 批准 `PRODUCT_PLAN_V1.3` 并明确口令`第二阶段，开发`）
+- PLAN_VERSION：**PRODUCT_PLAN_V1.3**（2026-09-27 局部取代 V1.2 的历史统计排除条款；其余不冲突条款 V1.0／V1.2 继续有效）
+- PLAN_READINESS_SCORE：**91**（V1.3 自己的分，不沿用 V1.2 的 94）
+- PLAN_GATE：**APPROVED**
+- DEV_BASELINE：**PRODUCT_PLAN_V1.3**
+- CHANGE_REQUEST：**NONE**（TASK-021 历史统计的 Change C 局部受控重开已闭环：Planner 三轮＋Research Reviewer 三轮判 PASS／P0=0／blocking P1=0 → 用户 Human Gate 批准 `PRODUCT_PLAN_V1.3` → 新 DEV_BASELINE 回 DEVELOP）
 - Stage ID（本阶段叫什么）：stretch-app-v11-ambient
 - 剩 P0（没完的才列，多一条都不行）：
   - P0-5：native R004-R006 / R022-R034（FGS / Doze / Android 版本矩阵）待排期；本地构建链已通，可随时开工
-- 当前 Task（正干到哪）：**TASK-021 历史统计**（卡在 **Human Gate 等用户批准**）。Reviewer Round 3 结论 PASS（P0=0／blocking P1=0；Planner 自评 Readiness 90，Reviewer 独立 76，Gate 形式落在待写的 V1.3 增量草案上）。用户已拍 9 项决策（HD-1=B 流程级分类／HD-2=A 半程计入标注／HD-3=A 首页入口／HD-4=清全部＋删单条／HD-5=B 种子预置类型／HD-6=A 统一实际动作时间／HD-7=A 完成页+Runner 双语／HD-8=做本机声明／HD-9=A 先修 R006 再做统计）。**批准后下一步：派 Planner 落 PRODUCT_PLAN_V1.3 增量草案（把历史统计移入 Functional Scope＋补外部/用户证据以过 90 Gate）→ 新 DEV_BASELINE → 用户说『第二阶段，开发』才派 TASK-021-R006**。Planner Round 1 → Research Reviewer 判 **FAIL/P0=3/Readiness 58** → Planner Round 2（改判 C、补 HD-1 D 选项与 HD-4~HD-8、砍双份步骤真源等过度设计、收敛首发范围为累计有效时长＋最近 10 条）→ Research Reviewer Round 2 判 **FAIL(轻)/P0=0/blocking P1=3/Readiness 74**，3 个 P0 已真闭环。产出：`docs/pm/PLAN-TASK-021-history-stats.md`、复核 `docs/review/RESEARCH_REVIEW-task021-history-stats.md`（含 Round 2）。**下一步：用户拍板 HD-1~HD-9 → Planner Round 3 补 3 条机械项 → 复审 → 新 Plan 草案 → Human Gate**。未开发、未动业务代码。
+- 当前 Task（正干到某）：**TASK-021 历史统计**（Phase2 DEVELOP，DEV_BASELINE=PRODUCT_PLAN_V1.3）。**TASK-021-R006 已完成**：修好真单调时钟（`SystemClock.elapsedRealtime()`，经本地 Expo 模块 `modules/stretch-runtime`）与真 boot 身份（`Settings.Global.BOOT_COUNT`）；code-reviewer 两轮（R1 FAIL/P0=0/blocking P1=1 → 回炉修降级静默+混源纪元 → R2 **PASS/P0=0/blocking P1=0**，明确『统计功能可以开工』）；12 Pro（indq5xfi6hovay4d）真机已验 +1h/−1h 跳钟『已用』连续、会话未丢。**进行中：TASK-021-B1 数据层**（v4 迁移＋训练类型表＋归档逻辑）。产出：计划 `docs/pm/PLAN-TASK-021-history-stats.md`、新基线 `docs/pm/PRODUCT_PLAN_V1.3.md`、复核 `docs/review/RESEARCH_REVIEW-task021-history-stats.md`（R1/R2/R3）与 `docs/review/CODE_REVIEW-task021-r006.md`（R1/R2）。
 - 执行链/Session（仅真 resume 通道填；TM 只记录/引用，不手造 ID）：builder 走 opencode 通道 `opencode-go/deepseek-v4.1-flash`（旧 codebuddy 通道作废；TASK-018 同链续 session 返工 3 轮）；supervisor 走 opencode `opencode-go/muse-spark-1.3-contributor`；planner/product-reviewer/senior 走 codex；code-reviewer/experience-recorder/neat-freak 本窗口 subagent；qa 本窗口直派 + adb/Expo 走本窗口 bash 直驱
 - 账本：`docs/model/TASK-MODEL-LOG.jsonl` **23 行**、`docs/model/DISPATCH-LOG.jsonl` **35 行**，两文件 schema 第二道校验均 exit 0（supervisor 已复检；neat-freak 2026-09-27 复核 `node scripts/model/check-ledger.mjs docs/model` 仍 exit 0）
 - 未闭环评审意见（还没改的）：
@@ -41,7 +41,7 @@
 ### 1.1 产品与阶段
 
 - 产品：Android 拉伸语音播报 App（Expo SDK 57 + React Native 0.86.3 + TypeScript + 本地 SQLite + TTS），本地优先、无账号、无云后端。
-- 阶段：`DEVELOP`，`DEV_BASELINE=PRODUCT_PLAN_V1.2`（V1.1 Release Hardening 增量计划，Readiness 94，已过 Human Gate）。
+- 阶段：`DEVELOP`，`DEV_BASELINE=PRODUCT_PLAN_V1.3`（2026-09-27 由 V1.2 局部升级而来，纳入历史统计增量基线，Readiness 91，已过 Human Gate）。
 - 阶段目标（Stage `stretch-app-v11-ambient`）：在**不重做 V1.0 业务**的前提下，把 Android 计时/活动会话/后台锁屏播报/停止恢复/迁移行为加固到可验证；并顺带完成若干局部 UI/音频增强。
 
 ### 1.2 已完成并收工的内容（按时间）

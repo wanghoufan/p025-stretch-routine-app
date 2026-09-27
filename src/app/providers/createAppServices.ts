@@ -7,8 +7,8 @@ import { createRoutineRepository, type RoutineRepository } from '../../data/repo
 import { createSessionRepository, type SessionRepository } from '../../data/repositories/sessionRepository';
 import { createSettingsKeyValueStore } from '../../data/repositories/settingsKeyValueStore';
 import { createSettingsRepository, type SettingsRepository } from '../../features/settings/settingsRepository';
-import { SystemWallClock, ExpoGoMonotonicClock, type MonotonicClock, type WallClock } from '../../services/clock';
-import { ExpoGoBootInfoProvider, type BootInfoProvider } from '../../services/runtime/BootInfo';
+import { SystemWallClock, DeviceMonotonicClock, type MonotonicClock, type WallClock } from '../../services/clock';
+import { DeviceBootInfoProvider, type BootInfoProvider } from '../../services/runtime/BootInfo';
 import {
   ExpoGoProcessTerminationProvider,
   type ProcessTerminationProvider,
@@ -64,8 +64,8 @@ export function createAppServices(options: CreateAppServicesOptions = {}): AppSe
   return {
     db,
     wallClock,
-    monotonic: options.monotonic ?? new ExpoGoMonotonicClock(),
-    bootInfo: options.bootInfo ?? new ExpoGoBootInfoProvider(),
+    monotonic: options.monotonic ?? new DeviceMonotonicClock(),
+    bootInfo: options.bootInfo ?? new DeviceBootInfoProvider(),
     termination: options.termination ?? new ExpoGoProcessTerminationProvider(),
     ticker: options.ticker ?? createSystemTicker(),
     tickIntervalMs: options.tickIntervalMs ?? DEFAULT_TICK_INTERVAL_MS,

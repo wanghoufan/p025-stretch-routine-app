@@ -5,8 +5,21 @@
  * `act()`-adjacent warnings would otherwise drown out real failures.
  */
 
+import { __resetStretchRuntimeLookupForTest } from '../services/runtime/StretchRuntime';
+
 const originalWarn = console.warn.bind(console);
 const originalError = console.error.bind(console);
+
+/**
+ * The `stretch-runtime` bridge memoises its native lookup for the lifetime of a
+ * process (R006 P1-1). Tests that simulate different native availability must
+ * therefore each start from a fresh "process", otherwise the cached first
+ * lookup leaks between cases. Reset here so no individual test needs to know
+ * about the cache.
+ */
+beforeEach(() => {
+  __resetStretchRuntimeLookupForTest();
+});
 
 const IGNORED_PATTERNS = [
   'not wrapped in act',

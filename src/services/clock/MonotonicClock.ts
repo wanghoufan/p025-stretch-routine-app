@@ -1,43 +1,61 @@
+import { nativeNowElapsedMs } from '../runtime/StretchRuntime';
+
 /**
  * Monotonic clock port (PRODUCT_PLAN_V1.2 Technical Approach — Clock; R007).
  *
- * `nowElapsedMs()` is milliseconds since an arbitrary, process-stable origin
- * that must **not** be affected by wall-clock changes. It is the single source
- * of truth for every authoritative runner duration: countdowns, catch-up,
- * pause/resume and same-boot recovery.
+ * `nowElapsedMs()` is milliseconds since an arbitrary origin that must **not**
+ * be affected by wall-clock changes. It is the single source of truth for every
+ * authoritative runner duration: countdowns, catch-up, pause/resume and
+ * same-boot recovery.
  *
- * ── Native TODO (deferred to the build/native channel, R004–R006) ───────────
- * The real implementation must read Android `elapsedRealtime()` (which keeps
- * counting through Deep Sleep/Doze and is immune to user/network clock changes)
- * from the `modules/stretch-runtime` local Expo module. Until that module can be
- * built and verified on device, `ExpoGoMonotonicClock` below falls back to
- * `Date.now()` so the JS layer stays developable in Expo Go.
+ * ── Source (R006) ──────────────────────────────────────────────────────────
+ * The production source is the local `stretch-runtime` Android module, which
+ * returns `SystemClock.elapsedRealtime()`:
+ *   - driven by the kernel `CLOCK_BOOTTIME` clock, so it keeps counting through
+ *     Doze/deep sleep;
+ *   - completely independent of the RTC, so a user or network wall-clock change
+ *     (and the ±1h/±1d jumps in the device tests) cannot move it.
  *
- * The fallback is deliberately isolated behind this port:
- *   - domain code never calls `Date.now()` for timing;
- *   - tests use `FakeMonotonicClock`, so behaviour is verified against a true
- *     monotonic source independent of the wall clock (see R013 wall-jump tests);
- *   - swapping in the native source is a one-line composition-root change.
+ * Where that module is absent — Expo Go, Jest, web — the clock falls back to
+ * React Native's own high-resolution clock (`performance.now()`), which is
+ * `std::chrono::steady_clock` in the C++ layer (see
+ * `ReactCommon/react/timing/primitives.h`), i.e. `CLOCK_MONOTONIC` on Android:
+ * still wall-clock independent, just without deep-sleep credit.
+ * `Date.now()` is never used here on any path.
  */
 export interface MonotonicClock {
   nowElapsedMs(): number;
 }
 
+/** Runtime globals that may carry a high-resolution monotonic clock. */
+interface MonotonicGlobals {
+  performance?: { now?: () => number };
+  nativePerformanceNow?: () => number;
+}
+
 /**
- * Expo Go / pure-JS fallback.
- *
- * `Date.now()` is wall-clock backed, therefore **not** truly monotonic: a wall
- * jump would move it. It is acceptable only as an interim development source
- * and MUST be replaced by native `elapsedRealtime` before any native Exit Gate
- * or timing claim (R006 / R028). `bootInfo` and recovery treat a bootCount
- * mismatch conservatively, which is what keeps the fallback from auto-playing
- * across a process restart.
+ * React Native's built-in high-resolution clock (ms since boot, monotonic).
+ * `setUpPerformance` installs one of these two on every RN runtime.
  */
-export class ExpoGoMonotonicClock implements MonotonicClock {
+function highResolutionElapsedMs(): number {
+  const scope = globalThis as unknown as MonotonicGlobals;
+  if (typeof scope.performance?.now === 'function') {
+    return scope.performance.now();
+  }
+  if (typeof scope.nativePerformanceNow === 'function') {
+    return scope.nativePerformanceNow();
+  }
+  throw new Error('no monotonic time source available in this runtime');
+}
+
+/**
+ * Production monotonic clock: device `elapsedRealtime` through the native
+ * module, with the React Native high-resolution clock as the dev-runtime
+ * fallback. Both are monotonic; only the native one credits deep sleep.
+ */
+export class DeviceMonotonicClock implements MonotonicClock {
   nowElapsedMs(): number {
-    // TODO(native R006): replace with `StretchRuntime.nowElapsedMs()` backed by
-    // Android elapsedRealtime. Do not ship timing claims built on Date.now().
-    return Date.now();
+    return nativeNowElapsedMs() ?? highResolutionElapsedMs();
   }
 }
 

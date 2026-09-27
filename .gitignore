@@ -45,7 +45,11 @@ yarn-error.*
 
 # 本地构建产物（APK存releases/，CNG原生目录）：体积大，不进仓
 releases/
-android/
+# 仅忽略项目根的 prebuild 产物；modules/<name>/android/ 是本地 Expo 模块的
+# 手写原生源码，必须进仓（非贪婪匹配会让裸 android/ 误吞它）
+/android/
+# 上述例外之下，模块自身 Gradle 构建产物仍不进仓
+**/android/build/
 
 # 本地临时文件夹（对外转发用的提示词/草稿等一次性文件，不进仓）
 temp/

@@ -1,0 +1,6 @@
+{
+  "name": "stretch-runtime",
+  "version": "0.1.0",
+  "description": "Local Android Expo module (R006): monotonic uptime (SystemClock.elapsedRealtime) and device boot identity (Settings.Global.BOOT_COUNT).",
+  "private": true
+}
