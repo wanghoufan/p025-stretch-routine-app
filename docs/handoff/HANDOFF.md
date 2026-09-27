@@ -84,7 +84,7 @@
 - 历史装机记录：三台手机曾装 `releases/stretch-routine-v1.1.0-local.apk`：`xagapro`=Note11T Pro（旧开发机）、`ruby`=Note12、`pearl`=Note12T Pro（用户机，禁碰）。
 - 新手机装机：直接 `adb install -r` 该 APK；HyperOS 会弹 USB 安装确认框，**等倒计时走完再点「继续安装」**，点早直接判拒绝。
 - 要出新的本地 APK：走本地构建链（`npx expo run:android --variant release` 或 `cd android && ./gradlew :app:assembleRelease`），产物在 `android/app/build/outputs/apk/release/app-release.apk`，按惯例拷成 `releases/stretch-routine-vX.Y.Z-local.apk`。**不耗 EAS 额度**；EAS 免费额度 2026-10-01 恢复仅为备用通道（TASK-015）。
-- 纯 JS 改动想快速真机看效果：`npx expo start --port 8081` + `adb reverse tcp:8081 tcp:8081` + 用 Expo Go 打开 `exp://127.0.0.1:8081`（Expo Go 57.0.9 已装在 xagapro）。
+- 纯 JS 改动想快速真机看效果：`npx expo start --port 8081` + `adb reverse tcp:8081 tcp:8081` + 用 Expo Go 打开 `exp://127.0.0.1:8081`。**本项目真机验收只用 Redmi Note 12 Pro（`indq5xfi6hovay4d`）**（用户 2026-09-27 明确「不要用别的手机」）；上面「历史装机记录」里的 xagapro / pearl 是历史事实、不是现行目标机。**注意 Expo Go 不能作为涉及原生模块特性的验收环境**——Expo Go 没有 `modules/stretch-runtime`，会退回弱时间源与进程身份 boot 标识，行为与装 APK 不同（R006 已实证，见 `docs/qa/task021-r006.md`）；它只适合验纯 JS 改动。
 
 ### 2.3 恢复时第一件该做的事
 
