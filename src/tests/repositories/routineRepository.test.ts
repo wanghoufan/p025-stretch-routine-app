@@ -233,4 +233,50 @@ describe('routine repository', () => {
     expect(routinesList.map((routine) => routine.name)).toEqual(['第二个', '第一个']);
     db.close();
   });
+
+  it('persists the training type on create and update (TASK-021 写路径)', async () => {
+    const { db, routines } = setup();
+    await runMigrations(db); // seeds the three builtin training_types rows
+
+    // New routine with an explicit type round-trips.
+    const created = await routines.create({
+      name: '核心流程',
+      defaultDurationSec: 30,
+      defaultTransitionSec: 0,
+      trainingTypeId: 'CORE',
+      steps: [{ displayName: 'A', durationSec: 30, transitionSec: 0 }],
+    });
+    expect(created.routine.trainingTypeId).toBe('CORE');
+    expect((await routines.getById(created.routine.id))?.trainingTypeId).toBe('CORE');
+
+    // An update that omits the field keeps the stored type.
+    const edited = await routines.update(created.routine.id, {
+      name: '核心流程',
+      defaultDurationSec: 30,
+      defaultTransitionSec: 0,
+      steps: [{ displayName: 'A', durationSec: 30, transitionSec: 0 }],
+    });
+    expect(edited.routine.trainingTypeId).toBe('CORE');
+
+    // An explicit null re-classifies as 未分类 and round-trips as null.
+    const unclassified = await routines.update(created.routine.id, {
+      name: '核心流程',
+      defaultDurationSec: 30,
+      defaultTransitionSec: 0,
+      trainingTypeId: null,
+      steps: [{ displayName: 'A', durationSec: 30, transitionSec: 0 }],
+    });
+    expect(unclassified.routine.trainingTypeId).toBeNull();
+    expect((await routines.getById(created.routine.id))?.trainingTypeId).toBeNull();
+
+    // A brand-new routine without a type defaults to 未分类.
+    const fresh = await routines.create({
+      name: '未分类流程',
+      defaultDurationSec: 10,
+      defaultTransitionSec: 0,
+      steps: [{ displayName: 'A', durationSec: 10, transitionSec: 0 }],
+    });
+    expect(fresh.routine.trainingTypeId ?? null).toBeNull();
+    db.close();
+  });
 });

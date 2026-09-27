@@ -2,13 +2,15 @@ import { useEffect, useRef } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '../../../app/navigation/NavigationContext';
 import { useSpeech } from '../../../app/providers/SpeechContext';
-import { formatClock, formatDuration } from '../../../shared/utils/format';
+import { useLanguage } from '../../../app/providers/LanguageContext';
+import { formatClock } from '../../../shared/utils/format';
 import { Card } from '../../../shared/components/Layout';
 import { NoticeBanner } from '../../../shared/components/NoticeBanner';
 import { Screen } from '../../../shared/components/Screen';
 import { ActionIconTile } from '../../../shared/components/ActionIconTile';
 import { actionIconFor } from '../../../shared/assets/actionIcons';
 import { colors, fontSizes, radius, spacing } from '../../../shared/theme';
+import { formatStatsDuration } from '../../stats/statsFormat';
 import { RunnerControls } from '../components/RunnerControls';
 import { useRunner } from '../hooks/useRunner';
 
@@ -17,10 +19,18 @@ import { useRunner } from '../hooks/useRunner';
  *
  * Renders the authoritative session; the visible countdown is only a
  * presentation of timestamp-derived state (Constitution §3.3).
+ *
+ * TASK-021-B4: fully bilingual (HD-7); navigation to the completion screen is
+ * gated on the terminal-archive outcome so success is never reported before
+ * the commit (V1.3 DoD); the elapsed line keeps its transition-inclusive
+ * source but says so explicitly (HD-6). A successful early stop still goes
+ * straight home; only a failed one enters the completion screen for its
+ * retry entry (review P1-2).
  */
 export function RunnerScreen() {
   const navigation = useNavigation();
   const { ttsError, dismissTtsError } = useSpeech();
+  const { language, t } = useLanguage();
   const { view, togglePause, addTime, previous, skip, end } = useRunner({});
 
   const navigatedRef = useRef<'idle' | 'completed' | 'stopped'>('idle');
@@ -30,18 +40,45 @@ export function RunnerScreen() {
       return;
     }
     if (view.isFinished && view.routineName) {
+      // Wait for the archive commit to settle; 'failed' still navigates —
+      // the completion screen owns the retry entry.
+      if (!view.terminalOutcome || view.terminalOutcome.status === 'pending') {
+        return;
+      }
       navigatedRef.current = 'completed';
       navigation.replace('Completion', {
         routineId: view.routineId ?? '',
         routineName: view.routineName,
         stepCount: view.stepCount,
-        elapsedMs: view.elapsedMs,
+        actionMs: view.statsActionMs,
+        outcome: view.terminalOutcome,
       });
       return;
     }
     if (view.isStopped) {
+      // TASK-021-B4 rework (review P1-2): an early stop also waits for its
+      // archive outcome before navigating. Success (archived, or a deliberate
+      // expected exclusion) goes straight home exactly as before; only a
+      // failure that left the session uncounted (or an untrusted end date)
+      // routes to the completion screen, which owns the retry entry.
+      if (!view.terminalOutcome || view.terminalOutcome.status === 'pending') {
+        return;
+      }
       navigatedRef.current = 'stopped';
-      navigation.reset('Home', undefined);
+      if (
+        view.terminalOutcome.status === 'archived' ||
+        view.terminalOutcome.status === 'excluded'
+      ) {
+        navigation.reset('Home', undefined);
+        return;
+      }
+      navigation.replace('Completion', {
+        routineId: view.routineId ?? '',
+        routineName: view.routineName ?? '',
+        stepCount: view.stepCount,
+        actionMs: view.statsActionMs,
+        outcome: view.terminalOutcome,
+      });
     }
   }, [
     view.isFinished,
@@ -49,22 +86,26 @@ export function RunnerScreen() {
     view.routineId,
     view.routineName,
     view.stepCount,
-    view.elapsedMs,
+    view.statsActionMs,
+    view.terminalOutcome,
     navigation,
   ]);
 
   const confirmEnd = () => {
-    Alert.alert('结束流程', '确定要结束当前流程吗？已经完成的部分不会保存。', [
-      { text: '继续练习', style: 'cancel' },
-      { text: '结束', style: 'destructive', onPress: end },
+    // Fact fix (V1.3 DoD): an early end DOES count when action time exists,
+    // so the old "completed parts are not saved" claim is gone; nothing is
+    // promised for a 0ms session either.
+    Alert.alert(t('runner.endConfirmTitle'), t('runner.endConfirmMessage'), [
+      { text: t('runner.endConfirmResume'), style: 'cancel' },
+      { text: t('runner.endConfirmStop'), style: 'destructive', onPress: end },
     ]);
   };
 
   if (view.status === 'loading') {
     return (
-      <Screen title="进行中" scroll={false}>
+      <Screen title={t('runner.screenTitle')} scroll={false}>
         <Text style={styles.meta} maxFontSizeMultiplier={1.5}>
-          正在载入…
+          {t('common.loading')}
         </Text>
       </Screen>
     );
@@ -72,12 +113,12 @@ export function RunnerScreen() {
 
   if (view.status !== 'ready') {
     return (
-      <Screen title="进行中" onBack={navigation.goBack}>
+      <Screen title={t('runner.screenTitle')} onBack={navigation.goBack}>
         <NoticeBanner
           tone="error"
-          title="无法继续流程"
-          message={view.errorMessage ?? '没有进行中的流程'}
-          actionLabel="返回"
+          title={t('runner.cannotResume')}
+          message={view.errorMessage ?? t('runner.noActive')}
+          actionLabel={t('common.back')}
           onAction={() => navigation.reset('Home', undefined)}
         />
       </Screen>
@@ -85,17 +126,17 @@ export function RunnerScreen() {
   }
 
   const isTransition = view.isTransition;
-  const headline = isTransition ? '准备下一个动作' : (view.currentStep?.displayName ?? '');
+  const headline = isTransition ? t('runner.transitionHeadline') : (view.currentStep?.displayName ?? '');
   const speakPreview = isTransition ? view.transitionTarget?.speakText : view.currentStep?.speakText;
 
   return (
-    <Screen title={view.routineName ?? '进行中'} onBack={confirmEnd} scroll={false}>
+    <Screen title={view.routineName ?? t('runner.screenTitle')} onBack={confirmEnd} scroll={false}>
       {ttsError ? (
         <NoticeBanner
           tone="warning"
-          title="语音暂时不可用"
-          message={`${ttsError}（计时与画面不受影响，可继续跟练）`}
-          actionLabel="知道了"
+          title={t('runner.ttsWarning')}
+          message={t('runner.ttsWarningDesc', { error: ttsError })}
+          actionLabel={t('common.gotIt')}
           onAction={dismissTtsError}
         />
       ) : null}
@@ -103,7 +144,7 @@ export function RunnerScreen() {
       <Card style={styles.card}>
         <ActionIconTile source={actionIconFor(headline)} size={96} style={styles.heroTile} />
         <Text style={styles.position} maxFontSizeMultiplier={1.5}>
-          {`第 ${view.stepPosition} / ${view.stepCount} 个`}
+          {t('runner.position', { index: view.stepPosition, count: view.stepCount })}
         </Text>
         <Text
           style={styles.headline}
@@ -117,43 +158,51 @@ export function RunnerScreen() {
           style={styles.countdown}
           maxFontSizeMultiplier={1.4}
           testID="runner-remaining"
-          accessibilityLabel={`剩余 ${formatClock(view.remainingMs)}`}
+          accessibilityLabel={`${t('runner.remaining')} ${formatClock(view.remainingMs)}`}
         >
           {formatClock(view.remainingMs)}
         </Text>
         <Text style={styles.meta} maxFontSizeMultiplier={1.5} testID="runner-phase">
           {isTransition
-            ? `过渡中 · 接着做 ${view.transitionTarget?.displayName ?? ''}`
-            : `本动作 ${formatDuration(Math.round((view.currentStep?.durationSec ?? 0)))}`}
+            ? t('runner.transitionTo', { name: view.transitionTarget?.displayName ?? '' })
+            : t('runner.stepDuration', {
+                duration: formatStatsDuration(
+                  Math.round(view.currentStep?.durationSec ?? 0) * 1000,
+                  language,
+                ),
+              })}
         </Text>
         {view.isPaused ? (
           <Text style={styles.paused} maxFontSizeMultiplier={1.5} testID="runner-paused">
-            已暂停
+            {t('runner.paused')}
           </Text>
         ) : null}
 
         <View
           style={styles.progressTrack}
           accessibilityRole="progressbar"
-          accessibilityLabel="流程进度"
+          accessibilityLabel={t('runner.progressLabel')}
           accessibilityValue={{ min: 0, max: 100, now: Math.round(view.progress * 100) }}
         >
           <View style={[styles.progressFill, { width: `${Math.round(view.progress * 100)}%` }]} />
         </View>
         <Text style={styles.meta} maxFontSizeMultiplier={1.5}>
-          {`已用 ${formatClock(view.elapsedMs)} / 共约 ${formatDuration(Math.round(view.totalMs / 1000))}`}
+          {t('runner.elapsedTotal', {
+            elapsed: formatClock(view.elapsedMs),
+            total: formatStatsDuration(view.totalMs, language),
+          })}
         </Text>
       </Card>
 
       {view.nextStep && !isTransition ? (
         <Text style={styles.next} maxFontSizeMultiplier={1.5} testID="runner-next-step">
-          {`下一个：${view.nextStep.displayName}`}
+          {t('runner.nextStep', { name: view.nextStep.displayName })}
         </Text>
       ) : null}
 
       {speakPreview ? (
         <Text style={styles.speak} maxFontSizeMultiplier={1.5}>
-          {`语音：${speakPreview}`}
+          {t('runner.speakPreview', { text: speakPreview })}
         </Text>
       ) : null}
 

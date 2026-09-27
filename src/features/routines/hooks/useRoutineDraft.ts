@@ -28,6 +28,12 @@ export interface RoutineDraft {
   defaultDurationSec: number;
   defaultTransitionSec: number;
   category: string[];
+  /**
+   * Training type (TASK-021-B3): a `training_types.type_id` or `null` for
+   * 未分类. New routines start unclassified; edits echo the stored value and
+   * are always saved explicitly (explicit `null` = re-classify as 未分类).
+   */
+  trainingTypeId: string | null;
   steps: RoutineStepDraft[];
 }
 
@@ -44,6 +50,7 @@ export interface UseRoutineDraftResult {
   error: string | null;
   setName: (name: string) => void;
   setCategory: (category: string[]) => void;
+  setTrainingTypeId: (typeId: string | null) => void;
   setDefaultDurationSec: (seconds: number) => void;
   setDefaultTransitionSec: (seconds: number) => void;
   /** Parses pasted lines and appends them as ordered steps. Returns added count. */
@@ -70,6 +77,8 @@ function createEmptyDraft(defaults: DraftDefaults): RoutineDraft {
     defaultDurationSec: clampDuration(defaults.defaultDurationSec),
     defaultTransitionSec: clampTransition(defaults.defaultTransitionSec),
     category: [],
+    // V1.3 HD-1: a brand-new routine starts unclassified.
+    trainingTypeId: null,
     steps: [],
   };
 }
@@ -81,6 +90,7 @@ function toDraft(routineId: string, loaded: RoutineWithSteps): RoutineDraft {
     defaultDurationSec: loaded.routine.defaultDurationSec,
     defaultTransitionSec: loaded.routine.defaultTransitionSec,
     category: [...(loaded.routine.category ?? [])],
+    trainingTypeId: loaded.routine.trainingTypeId ?? null,
     steps: loaded.steps.map((step) => ({
       id: step.id,
       sourceActionId: step.sourceActionId,
@@ -165,6 +175,10 @@ export function useRoutineDraft(options: {
 
   const setCategory = useCallback((category: string[]) => {
     setDraft((previous) => (previous ? { ...previous, category } : previous));
+  }, []);
+
+  const setTrainingTypeId = useCallback((trainingTypeId: string | null) => {
+    setDraft((previous) => (previous ? { ...previous, trainingTypeId } : previous));
   }, []);
 
   const setDefaultDurationSec = useCallback((seconds: number) => {
@@ -326,6 +340,9 @@ export function useRoutineDraft(options: {
       defaultDurationSec: draft.defaultDurationSec,
       defaultTransitionSec: draft.defaultTransitionSec,
       category: draft.category,
+      // Always explicit from the editor: a selected 未分类 saves a real
+      // `null` (re-classify), never an omission.
+      trainingTypeId: draft.trainingTypeId,
       steps: draft.steps,
     });
     setDraft(toDraft(saved.routine.id, saved));
@@ -338,6 +355,7 @@ export function useRoutineDraft(options: {
     error,
     setName,
     setCategory,
+    setTrainingTypeId,
     setDefaultDurationSec,
     setDefaultTransitionSec,
     addBatch,

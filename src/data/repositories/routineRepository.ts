@@ -36,6 +36,13 @@ export interface RoutineInput extends TagFields {
   name: string;
   defaultDurationSec: number;
   defaultTransitionSec: number;
+  /**
+   * Training type (TASK-021-B3/HD-1): a `training_types.type_id`, or
+   * `null` for 未分类. On `create` an omitted value stores NULL; on `update`
+   * an omitted value keeps the existing one, while an explicit `null`
+   * re-classifies the routine as 未分类.
+   */
+  trainingTypeId?: string | null;
   /** Ordered steps. At least one valid step is required (FR-003). */
   steps: readonly RoutineStepInput[];
 }
@@ -195,6 +202,7 @@ export function createRoutineRepository(deps: RoutineRepositoryDeps): RoutineRep
         category: input.category,
         difficulty: normalizeDifficulty(input.difficulty),
         bodypart: input.bodypart,
+        trainingTypeId: input.trainingTypeId ?? null,
         createdAt: now,
         updatedAt: now,
       };
@@ -203,8 +211,8 @@ export function createRoutineRepository(deps: RoutineRepositoryDeps): RoutineRep
         await db.transaction(async () => {
           await db.run(
             `INSERT INTO routines
-               (id, name, default_duration_sec, default_transition_sec, category, difficulty, bodypart, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+               (id, name, default_duration_sec, default_transition_sec, category, difficulty, bodypart, training_type_id, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               routine.id,
               routine.name,
@@ -213,6 +221,7 @@ export function createRoutineRepository(deps: RoutineRepositoryDeps): RoutineRep
               joinTagList(routine.category),
               routine.difficulty ?? null,
               joinTagList(routine.bodypart),
+              input.trainingTypeId ?? null,
               routine.createdAt,
               routine.updatedAt,
             ],
@@ -247,7 +256,7 @@ export function createRoutineRepository(deps: RoutineRepositoryDeps): RoutineRep
           await db.run(
             `UPDATE routines
                 SET name = ?, default_duration_sec = ?, default_transition_sec = ?,
-                    category = ?, difficulty = ?, bodypart = ?, updated_at = ?
+                    category = ?, difficulty = ?, bodypart = ?, training_type_id = ?, updated_at = ?
               WHERE id = ?`,
             [
               name,
@@ -256,6 +265,9 @@ export function createRoutineRepository(deps: RoutineRepositoryDeps): RoutineRep
               joinTagList(input.category ?? existing.category),
               normalizeDifficulty(input.difficulty ?? existing.difficulty) ?? null,
               joinTagList(input.bodypart ?? existing.bodypart),
+              // `null` is meaningful (未分类), so only an *omitted* field keeps
+              // the stored value — same contract as the tag fields above.
+              'trainingTypeId' in input ? (input.trainingTypeId ?? null) : (existing.trainingTypeId ?? null),
               updatedAt,
               id,
             ],

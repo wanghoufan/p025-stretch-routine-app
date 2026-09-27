@@ -14,6 +14,7 @@ import { ActionLibraryPicker } from '../components/ActionLibraryPicker';
 import { BatchActionInput } from '../components/BatchActionInput';
 import { RoutineFormHeader } from '../components/RoutineFormHeader';
 import { RoutineStepList } from '../components/RoutineStepList';
+import { TrainingTypeSelector } from '../components/TrainingTypeSelector';
 import { StepEditor, type StepEditValues } from '../components/StepEditor';
 import { listLibraryActions } from '../../actions/services/actionLibraryService';
 
@@ -108,6 +109,8 @@ export function RoutineEditorScreen() {
         onChangeDefaultTransition={draftApi.setDefaultTransitionSec}
         onChangeCategory={draftApi.setCategory}
       />
+
+      <TrainingTypeSelector value={draft.trainingTypeId} onChange={draftApi.setTrainingTypeId} />
 
       <BatchActionInput onAdd={draftApi.addBatch} />
 

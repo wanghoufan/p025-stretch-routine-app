@@ -67,6 +67,7 @@ export function createTestStartService(services: AppServices): StartRoutineServi
     monotonic: services.monotonic,
     wallClock: services.wallClock,
     bootInfo: services.bootInfo,
+    history: services.history,
     generateId: services.generateId,
   });
 }

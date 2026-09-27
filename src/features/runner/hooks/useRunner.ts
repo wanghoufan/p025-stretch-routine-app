@@ -53,6 +53,7 @@ export function useRunner(options: UseRunnerOptions = {}): UseRunnerResult {
     const persistence = createSessionPersistence({
       repository: services.sessions,
       wallClock: services.wallClock,
+      history: services.history,
     });
     const ambient = new AmbientAudioService({ player: ambientPlayer });
     return new RunnerController({
@@ -63,6 +64,7 @@ export function useRunner(options: UseRunnerOptions = {}): UseRunnerResult {
       tts,
       ambient,
       settings: settingsRef.current,
+      history: services.history,
     });
   }, [services, tts, ambientPlayer]);
 

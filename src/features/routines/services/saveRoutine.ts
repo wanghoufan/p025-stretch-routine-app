@@ -20,6 +20,13 @@ export interface SaveRoutineDraft {
   defaultTransitionSec: number;
   /** Home group tag(s); empty means the 「其他」 fallback. */
   category: string[];
+  /**
+   * Training type (TASK-021-B3): a `training_types.type_id`, `null` for
+   * 未分类. The editor always passes it explicitly (an explicit `null`
+   * re-classifies an existing routine); omitting the field keeps the stored
+   * value on `update` — the repository contract, unchanged (B1).
+   */
+  trainingTypeId?: string | null;
   steps: readonly RoutineStepDraft[];
 }
 
@@ -66,6 +73,9 @@ export async function saveRoutine(
     defaultDurationSec: draft.defaultDurationSec,
     defaultTransitionSec: draft.defaultTransitionSec,
     category: draft.category,
+    // Omitted -> not sent, so an update keeps the stored type (repository
+    // contract); an explicit value (including `null`) always overwrites.
+    ...(draft.trainingTypeId === undefined ? {} : { trainingTypeId: draft.trainingTypeId }),
     steps: toStepInputs(draft.steps),
   };
 

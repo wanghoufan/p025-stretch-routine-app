@@ -70,6 +70,14 @@ export interface SeedRoutineStepDefinition {
 
 export interface SeedRoutineDefinition {
   name: string;
+  /**
+   * Training type frozen into the definition (TASK-021-B1, HD-5=B).
+   *
+   * Hand-assigned per shipped routine — never inferred from the name or the
+   * category tags at runtime. Must reference a `training_types.type_id` seeded
+   * by the V4 migration, so a wrong id fails loudly (FK) instead of guessing.
+   */
+  trainingTypeId: string;
   /** Ordered steps; bilateral Actions expand into a left/right pair. */
   steps: readonly SeedRoutineStepDefinition[];
   category?: readonly string[];
@@ -170,6 +178,7 @@ const cue = (actionKey: string, speakText: string): SeedRoutineStepDefinition =>
 export const SEED_ROUTINES: readonly SeedRoutineDefinition[] = [
   {
     name: '晨起全身拉伸',
+    trainingTypeId: 'STRETCH_RELAX',
     category: ['晨起'],
     difficulty: '低',
     bodypart: ['全身'],
@@ -185,6 +194,7 @@ export const SEED_ROUTINES: readonly SeedRoutineDefinition[] = [
   },
   {
     name: '跑后下肢放松',
+    trainingTypeId: 'STRETCH_RELAX',
     category: ['跑后'],
     difficulty: '中',
     bodypart: ['腿', '髋臀', '小腿'],
@@ -199,6 +209,7 @@ export const SEED_ROUTINES: readonly SeedRoutineDefinition[] = [
   {
     // Renamed from 办公室肩颈放松 (TASK-012): original 5 + 腰背 4 + 臀腿 3.
     name: '办公室久坐放松',
+    trainingTypeId: 'STRETCH_RELAX',
     category: ['办公'],
     difficulty: '低',
     bodypart: ['颈', '肩', '背', '腰腹', '髋臀', '腿'],
@@ -219,6 +230,7 @@ export const SEED_ROUTINES: readonly SeedRoutineDefinition[] = [
   },
   {
     name: '睡前全身放松',
+    trainingTypeId: 'STRETCH_RELAX',
     category: ['睡前'],
     difficulty: '低',
     bodypart: ['背', '腰腹', '髋臀'],
@@ -234,6 +246,7 @@ export const SEED_ROUTINES: readonly SeedRoutineDefinition[] = [
   },
   {
     name: '5分钟快速热身',
+    trainingTypeId: 'WARMUP',
     category: ['热身'],
     difficulty: '低',
     bodypart: ['全身', '肩', '腿'],
@@ -248,6 +261,7 @@ export const SEED_ROUTINES: readonly SeedRoutineDefinition[] = [
   {
     // New (TASK-012): 肩颈 5 + 腰背 4 + 臀腿 3.
     name: '久坐办公族拉伸',
+    trainingTypeId: 'STRETCH_RELAX',
     category: ['办公'],
     difficulty: '低',
     bodypart: ['颈', '肩', '背', '腰腹', '髋臀', '腿'],
@@ -268,6 +282,7 @@ export const SEED_ROUTINES: readonly SeedRoutineDefinition[] = [
   },
   {
     name: '初级核心',
+    trainingTypeId: 'CORE',
     category: ['核心'],
     difficulty: '低',
     bodypart: ['腰腹', '髋臀', '背'],
@@ -280,6 +295,7 @@ export const SEED_ROUTINES: readonly SeedRoutineDefinition[] = [
   },
   {
     name: '中级核心',
+    trainingTypeId: 'CORE',
     category: ['核心'],
     difficulty: '中',
     bodypart: ['腰腹', '髋臀', '背'],
@@ -294,6 +310,7 @@ export const SEED_ROUTINES: readonly SeedRoutineDefinition[] = [
   },
   {
     name: '高级核心',
+    trainingTypeId: 'CORE',
     category: ['核心'],
     difficulty: '高',
     bodypart: ['腰腹', '髋臀', '腿'],
@@ -465,13 +482,16 @@ async function insertSeedRoutine(
 
   await db.run(
     `INSERT INTO routines
-       (id, name, default_duration_sec, default_transition_sec, category, difficulty, bodypart, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, name, default_duration_sec, default_transition_sec, training_type_id, category, difficulty, bodypart, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       routineId,
       routine.name.trim().slice(0, ROUTINE_NAME_MAX_LENGTH),
       DEFAULT_STEP_DEFAULTS.durationSec,
       defaultTransitionSec,
+      // Hand-assigned in the definition (HD-5): no name/tag inference here. A
+      // foreign key makes a typo'd id fail loudly instead of guessing.
+      routine.trainingTypeId,
       joinTagList(routine.category),
       routine.difficulty ?? null,
       joinTagList(routine.bodypart),

@@ -6,6 +6,11 @@ import { ADD_TIME_MS } from '../../../domain/routine/constants';
 import { RunnerError } from '../../../shared/errors';
 import { phaseElapsedMs, phaseTotalMs, plannedCompletedMsBefore } from './runnerTime';
 import {
+  settleCompletedPhase,
+  settleCurrentPhase,
+  type SettledSegment,
+} from './runnerStats';
+import {
   completeSession,
   shouldPlayTransition,
   startStepPhase,
@@ -33,6 +38,12 @@ export type RunnerEvent =
 export interface RunnerResult {
   session: ActiveSession;
   events: RunnerEvent[];
+  /**
+   * Actual action time settled by this transition, per step. Informational:
+   * the ledger on the returned session is already updated, so callers never
+   * consume these numbers themselves (exactly-once by construction).
+   */
+  settled: readonly SettledSegment[];
 }
 
 export type RunnerControl =
@@ -55,6 +66,8 @@ export interface StartRunnerInput {
   wallMs: number;
   /** Boot identity that owns `nowElapsedMs`. */
   bootCount: number;
+  /** Training type frozen at start (HD-1/HD-5); null = 未分类. */
+  trainingTypeId?: string | null;
 }
 
 /** Start a routine at step 0 (SPEC US1 scenario 1). */
@@ -90,11 +103,15 @@ export function startRunner(input: StartRunnerInput): RunnerResult {
     lastUpdatedElapsedMs: input.nowElapsedMs,
     updatedAtWallMs: input.wallMs,
     bootCount: input.bootCount,
+    trainingTypeId: input.trainingTypeId ?? null,
+    statsEligible: true,
+    statsTotalStepMs: 0,
+    statsStepLedger: {},
     snapshotVersion: snapshot.version,
     snapshot,
   };
 
-  return { session, events: [{ type: 'STEP_STARTED', stepIndex: 0, suppressed: false }] };
+  return { session, events: [{ type: 'STEP_STARTED', stepIndex: 0, suppressed: false }], settled: [] };
 }
 
 /**
@@ -110,10 +127,11 @@ export function advanceRunner(
   nowElapsedMs: number,
 ): RunnerResult {
   if (steps.length === 0 || !isRunning(session.state)) {
-    return { session, events: [] };
+    return { session, events: [], settled: [] };
   }
 
   const batches: RunnerEvent[][] = [];
+  const settled: SettledSegment[] = [];
   const guard = steps.length * 2 + 4;
   let current = session;
 
@@ -131,6 +149,14 @@ export function advanceRunner(
     if (current.state === 'RUNNING_STEP') {
       const fromIndex = current.currentStepIndex;
       const nextIndex = fromIndex + 1;
+
+      // The step phase really ran to its boundary: settle its full effective
+      // duration before the machine leaves the phase (transitions settle 0).
+      const completed = settleCompletedPhase(current);
+      current = completed.session;
+      if (completed.settled) {
+        settled.push(completed.settled);
+      }
 
       if (shouldPlayTransition(steps, fromIndex)) {
         current = startTransitionPhase(current, steps, fromIndex, {
@@ -189,7 +215,7 @@ export function advanceRunner(
     }
   });
 
-  return { session: current, events };
+  return { session: current, events, settled };
 }
 
 function applyPause(session: ActiveSession, nowElapsedMs: number): ActiveSession {
@@ -246,15 +272,23 @@ function applyPrevious(
   const targetIndex = session.currentStepIndex - 1;
   if (targetIndex < 0) {
     // Defined no-op on the first step (SPEC edge cases).
-    return { session, events: [] };
+    return { session, events: [], settled: [] };
   }
-  const next = startStepPhase(session, steps, targetIndex, {
+  // The abandoned phase settles its actual elapsed part first (a transition
+  // settles nothing); the restarted step then accumulates afresh, and both
+  // passes add up under the same ledger key.
+  const abandoned = settleCurrentPhase(session, nowElapsedMs);
+  const next = startStepPhase(abandoned.session, steps, targetIndex, {
     overflowMs: 0,
     nowElapsedMs,
     completedPhaseMs: plannedCompletedMsBefore(steps, targetIndex),
     keepPaused: isPaused(session.state),
   });
-  return { session: next, events: [{ type: 'STEP_STARTED', stepIndex: targetIndex, suppressed: false }] };
+  return {
+    session: next,
+    events: [{ type: 'STEP_STARTED', stepIndex: targetIndex, suppressed: false }],
+    settled: abandoned.settled ? [abandoned.settled] : [],
+  };
 }
 
 /** Skip/Next: end the current phase now and move on (PLAN §7). */
@@ -264,29 +298,38 @@ function applySkip(
   nowElapsedMs: number,
 ): RunnerResult {
   const keepPaused = isPaused(session.state);
-  const elapsedContribMs = phaseElapsedMs(session, nowElapsedMs);
-  const completedPhaseMs = session.completedPhaseMs + elapsedContribMs;
+  // A skipped step counts only the part actually run; a skipped transition
+  // counts nothing ("stop waiting" is not action time).
+  const abandoned = settleCurrentPhase(session, nowElapsedMs);
+  const base = abandoned.session;
+  const elapsedContribMs = phaseElapsedMs(base, nowElapsedMs);
+  const completedPhaseMs = base.completedPhaseMs + elapsedContribMs;
 
   // Skipping during a transition means "stop waiting, start the prepared step".
   const targetIndex =
-    session.state === 'RUNNING_TRANSITION' || session.state === 'PAUSED_TRANSITION'
-      ? session.currentStepIndex
-      : session.currentStepIndex + 1;
+    base.state === 'RUNNING_TRANSITION' || base.state === 'PAUSED_TRANSITION'
+      ? base.currentStepIndex
+      : base.currentStepIndex + 1;
 
   if (targetIndex >= steps.length) {
     return {
-      session: completeSession({ ...session, completedPhaseMs }, nowElapsedMs),
+      session: completeSession({ ...base, completedPhaseMs }, nowElapsedMs),
       events: [{ type: 'COMPLETED' }],
+      settled: abandoned.settled ? [abandoned.settled] : [],
     };
   }
 
-  const next = startStepPhase(session, steps, targetIndex, {
+  const next = startStepPhase(base, steps, targetIndex, {
     overflowMs: 0,
     nowElapsedMs,
     completedPhaseMs,
     keepPaused,
   });
-  return { session: next, events: [{ type: 'STEP_STARTED', stepIndex: targetIndex, suppressed: false }] };
+  return {
+    session: next,
+    events: [{ type: 'STEP_STARTED', stepIndex: targetIndex, suppressed: false }],
+    settled: abandoned.settled ? [abandoned.settled] : [],
+  };
 }
 
 /**
@@ -302,44 +345,56 @@ export function applyRunnerControl(
   const ticked = advanceRunner(session, steps, nowElapsedMs);
   const base = ticked.session;
   const events = [...ticked.events];
+  const settled = [...ticked.settled];
 
   switch (control.type) {
     case 'PAUSE':
-      return { session: applyPause(base, nowElapsedMs), events };
+      return { session: applyPause(base, nowElapsedMs), events, settled };
 
     case 'RESUME': {
       const resumed = applyResume(base, nowElapsedMs);
       const afterResume = advanceRunner(resumed, steps, nowElapsedMs);
-      return { session: afterResume.session, events: [...events, ...afterResume.events] };
+      return {
+        session: afterResume.session,
+        events: [...events, ...afterResume.events],
+        settled: [...settled, ...afterResume.settled],
+      };
     }
 
     case 'ADD_TIME':
-      return { session: applyAddTime(base, nowElapsedMs, control.ms ?? ADD_TIME_MS), events };
+      return { session: applyAddTime(base, nowElapsedMs, control.ms ?? ADD_TIME_MS), events, settled };
 
     case 'PREVIOUS': {
       if (!isActive(base.state)) {
-        return { session: base, events };
+        return { session: base, events, settled };
       }
       const result = applyPrevious(base, steps, nowElapsedMs);
-      return { session: result.session, events: [...events, ...result.events] };
+      return { session: result.session, events: [...events, ...result.events], settled: [...settled, ...result.settled] };
     }
 
     case 'SKIP': {
       if (!isActive(base.state)) {
-        return { session: base, events };
+        return { session: base, events, settled };
       }
       const result = applySkip(base, steps, nowElapsedMs);
-      return { session: result.session, events: [...events, ...result.events] };
+      return { session: result.session, events: [...events, ...result.events], settled: [...settled, ...result.settled] };
     }
 
     case 'END': {
       if (!isActive(base.state)) {
-        return { session: base, events };
+        return { session: base, events, settled };
       }
-      return { session: stopSession(base, nowElapsedMs), events: [...events, { type: 'STOPPED' }] };
+      // Stopping mid-phase counts the partial step time (HD-2=A); a
+      // transition contributes nothing.
+      const stopped = settleCurrentPhase(base, nowElapsedMs);
+      return {
+        session: stopSession(stopped.session, nowElapsedMs),
+        events: [...events, { type: 'STOPPED' }],
+        settled: [...settled, ...(stopped.settled ? [stopped.settled] : [])],
+      };
     }
 
     default:
-      return { session: base, events };
+      return { session: base, events, settled };
   }
 }

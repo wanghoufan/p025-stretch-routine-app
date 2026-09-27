@@ -13,6 +13,7 @@ export interface RoutineRow {
   category: string | null;
   difficulty: string | null;
   bodypart: string | null;
+  training_type_id: string | null;
 }
 
 /** Row shape of the `routine_steps` table. */
@@ -45,6 +46,7 @@ export function rowToRoutine(row: RoutineRow): Routine {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     ...rowToRoutineTags(row),
+    trainingTypeId: row.training_type_id,
   };
 }
 

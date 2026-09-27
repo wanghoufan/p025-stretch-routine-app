@@ -39,7 +39,6 @@ describe('action/routine tag migration (TASK-012)', () => {
 
     const version = await runMigrations(db);
     expect(version).toBe(latestSchemaVersion());
-    expect(version).toBe(3);
 
     // Rows survive untouched and simply read back as untagged (NULL).
     const action = await db.get<{
@@ -84,7 +83,7 @@ describe('action/routine tag migration (TASK-012)', () => {
     const db = await createDatabaseAtVersion(2);
     await runMigrations(db);
     const again = await runMigrations(db);
-    expect(again).toBe(3);
+    expect(again).toBe(latestSchemaVersion());
     db.close();
   });
 });

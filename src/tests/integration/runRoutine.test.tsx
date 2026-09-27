@@ -52,11 +52,19 @@ describe('US1 自动播放到完成 (T046)', () => {
     expect(screen.getByText('第 3 / 3 个')).toBeTruthy();
     expect(screen.queryByTestId('runner-next-step')).toBeNull();
 
-    // t=65s: the routine completes and the completion screen appears.
+    // t=65s: the routine completes and the completion screen appears. HD-6:
+    // the duration is the actual action time (10+20+30s), transitions excluded.
     advanceTime(context, 30_000);
     expect(await screen.findByText('流程完成')).toBeTruthy();
     expect(screen.getByTestId('completion-routine-name')).toHaveTextContent('早间流程');
-    expect(screen.getByTestId('completion-summary')).toHaveTextContent('共 3 个动作 · 用时 1分5秒');
+    expect(screen.getByTestId('completion-summary')).toHaveTextContent('共 3 个动作 · 用时 1分');
+    expect(screen.getByTestId('completion-action-time-note')).toBeTruthy();
+    // The archive committed before the screen appeared.
+    expect(screen.getByTestId('completion-counted')).toBeTruthy();
+    expect(await context.services.history.getTotals()).toEqual({
+      totalStepMs: 60_000,
+      sessionCount: 1,
+    });
 
     // Cues were spoken in playback order: start, next-up, start, start, complete.
     expect(speaker.spoken).toEqual([

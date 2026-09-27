@@ -6,6 +6,7 @@ import { RunnerScreen } from '../../features/runner/screens/RunnerScreen';
 import { CompletionScreen } from '../../features/runner/screens/CompletionScreen';
 import { ActionLibraryScreen } from '../../features/actions/screens/ActionLibraryScreen';
 import { SettingsScreen } from '../../features/settings/screens/SettingsScreen';
+import { StatsScreen } from '../../features/stats/screens/StatsScreen';
 
 /** Renders the top route of the in-app stack. */
 export function AppNavigator() {
@@ -26,6 +27,8 @@ export function AppNavigator() {
       return <ActionLibraryScreen />;
     case 'Settings':
       return <SettingsScreen />;
+    case 'Stats':
+      return <StatsScreen />;
     default:
       return <HomeScreen />;
   }

@@ -63,6 +63,29 @@ export interface ActiveSession {
   /** Boot that owns the elapsed origin (`BootInfoProvider`). */
   bootCount: number;
 
+  /**
+   * Training type frozen at session start (TASK-021-B1, HD-1/HD-5).
+   * `null` = 未分类. A never-mutated snapshot scalar, not a live link.
+   */
+  trainingTypeId: string | null;
+
+  /**
+   * Stats accounting (TASK-021-B1). `false` only for sessions stored by a
+   * pre-stats build: they stay resumable but are never back-filled.
+   */
+  statsEligible: boolean;
+  /**
+   * Actual action time settled so far (monotonic sum; excludes pauses and
+   * transitions). Only grows.
+   */
+  statsTotalStepMs: number;
+  /**
+   * Per-step settled actual ms keyed by step index (stringified for JSON
+   * round-trips). Numbers only — the snapshot stays the single source of the
+   * playback content. `sum(values) === statsTotalStepMs` always holds.
+   */
+  statsStepLedger: Record<string, number>;
+
   /** Version of the snapshot payload; validated on decode. */
   snapshotVersion: number;
   /** Immutable playback content captured at start. */

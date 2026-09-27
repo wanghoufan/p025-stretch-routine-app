@@ -36,6 +36,9 @@ export function SettingsScreen() {
   const [clearing, setClearing] = useState(false);
   const [clearResult, setClearResult] = useState<string | null>(null);
   const [clearError, setClearError] = useState<string | null>(null);
+  const [clearingStats, setClearingStats] = useState(false);
+  const [clearStatsResult, setClearStatsResult] = useState<string | null>(null);
+  const [clearStatsError, setClearStatsError] = useState<string | null>(null);
   const [speechTest, setSpeechTest] = useState<string | null>(null);
 
   const runSpeechTest = useCallback(() => {
@@ -94,11 +97,51 @@ export function SettingsScreen() {
     );
   }, [runClear, t]);
 
+  // TASK-021-B2 (HD-4): statistics clearing is strictly isolated — it must
+  // never touch routines, the action library, the active session or the seed
+  // markers. The copy deliberately differs from 清除示例数据 to prevent the
+  // misreading that clearing stats deletes routines.
+  const runClearStats = useCallback(async () => {
+    setClearingStats(true);
+    setClearStatsResult(null);
+    setClearStatsError(null);
+    try {
+      await services.history.clearAllStats();
+      setClearStatsResult(t('settings.clearStatsDone'));
+    } catch {
+      setClearStatsError(t('settings.clearStatsError'));
+    } finally {
+      setClearingStats(false);
+    }
+  }, [services, t]);
+
+  const confirmClearStats = useCallback(() => {
+    Alert.alert(
+      t('settings.clearStats'),
+      t('settings.clearStatsConfirmMsg'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.clearStats'),
+          style: 'destructive',
+          onPress: () => {
+            void runClearStats();
+          },
+        },
+      ],
+      { cancelable: true },
+    );
+  }, [runClearStats, t]);
+
   return (
     <Screen title={t('settings.title')} onBack={navigation.goBack}>
       {loading ? <NoticeBanner title={t('settings.reading')} /> : null}
       {clearResult ? <NoticeBanner title={clearResult} /> : null}
       {clearError ? <NoticeBanner tone="error" title={t('settings.clearError')} message={clearError} /> : null}
+      {clearStatsResult ? <NoticeBanner title={clearStatsResult} /> : null}
+      {clearStatsError ? (
+        <NoticeBanner tone="error" title={t('settings.clearStatsError')} message={clearStatsError} />
+      ) : null}
 
       <SectionTitle>{t('settings.language')}</SectionTitle>
       <Card>
@@ -256,6 +299,22 @@ export function SettingsScreen() {
           disabled={clearing}
           accessibilityHint={t('settings.clearExamplesHint')}
           testID="settings-clear-examples"
+          style={styles.clearButton}
+        />
+      </Card>
+
+      <SectionTitle>{t('settings.stats')}</SectionTitle>
+      <Card>
+        <Text style={styles.hint} maxFontSizeMultiplier={1.5}>
+          {t('settings.statsDesc')}
+        </Text>
+        <AppButton
+          label={t('settings.clearStats')}
+          variant="danger"
+          onPress={confirmClearStats}
+          disabled={clearingStats}
+          accessibilityHint={t('settings.statsDesc')}
+          testID="settings-clear-stats"
           style={styles.clearButton}
         />
       </Card>

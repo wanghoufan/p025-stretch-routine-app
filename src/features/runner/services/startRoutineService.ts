@@ -1,10 +1,15 @@
 import type { ActiveSession } from '../../../domain/session/ActiveSession';
-import type { RoutineRepository, RoutineWithSteps } from '../../../data/repositories/routineRepository';
+import type {
+  RoutineRepository,
+  RoutineWithSteps,
+} from '../../../data/repositories/routineRepository';
 import type { SessionRepository } from '../../../data/repositories/sessionRepository';
+import type { SessionHistoryRepository } from '../../../data/repositories/sessionHistoryRepository';
 import type { MonotonicClock, WallClock } from '../../../services/clock';
 import type { BootInfoProvider } from '../../../services/runtime/BootInfo';
+import { deviceTimezoneOffsetMin } from '../../../domain/statistics/history';
 import { generateId, type IdGenerator } from '../../../shared/utils/id';
-import { startRunner, type RunnerEvent } from '../domain/runnerMachine';
+import { applyRunnerControl, startRunner, type RunnerEvent } from '../domain/runnerMachine';
 
 /**
  * Single entry point for starting a routine (R014–R018).
@@ -36,6 +41,10 @@ export interface StartRoutineServiceDeps {
   monotonic: MonotonicClock;
   wallClock: WallClock;
   bootInfo: BootInfoProvider;
+  /** Optional stats history (TASK-021-B1): durable loss notices on discard,
+   * and archival of the replaced session before a new one starts (V1.3 DoD
+   * 替换先归档旧场). */
+  history?: Pick<SessionHistoryRepository, 'recordAnomaly' | 'archiveAndClear'>;
   generateId?: IdGenerator;
 }
 
@@ -86,6 +95,16 @@ export function createStartRoutineService(deps: StartRoutineServiceDeps): StartR
       return null;
     }
     if (loaded.session.bootCount !== deps.bootInfo.getBootCount()) {
+      // The elapsed origin is gone: whatever ran is uncountable and is never
+      // guessed. Persist the anomalous loss BEFORE clearing; a failed notice
+      // write keeps the row so the loss is not silent (V1.3 §3).
+      try {
+        await deps.history?.recordAnomaly('recovery-boot-changed', {
+          sessionId: loaded.session.sessionId,
+        });
+      } catch {
+        return null;
+      }
       await deps.sessions.clear();
       return null;
     }
@@ -104,6 +123,8 @@ export function createStartRoutineService(deps: StartRoutineServiceDeps): StartR
       nowElapsedMs: deps.monotonic.nowElapsedMs(),
       wallMs: deps.wallClock.nowMs(),
       bootCount: deps.bootInfo.getBootCount(),
+      // Frozen at start; later edits never rewrite a running session's type.
+      trainingTypeId: loaded.routine.trainingTypeId ?? null,
     });
   }
 
@@ -121,6 +142,45 @@ export function createStartRoutineService(deps: StartRoutineServiceDeps): StartR
       return { kind: 'failed', error: error instanceof Error ? error.message : '无法创建会话' };
     }
     return { kind: 'started', session, events };
+  }
+
+  /**
+   * Dispose of the stored session before a replace, honoring the V1.3 DoD
+   * 「替换先归档旧场」＋闸门③: a live old session is END-settled and handed
+   * to `archiveAndClear` (counted time lands in history, expected exclusions
+   * clear neutrally); a previous-boot session is uncountable and is recorded
+   * as an anomalous loss first. Every path here either succeeds or KEEPS the
+   * old row and throws — a failed notice/archive must never silently drop the
+   * session, and the caller aborts the replace so no new session is created
+   * while the old one is unresolved.
+   */
+  async function disposeReplacedSession(old: ActiveSession): Promise<void> {
+    if (!deps.history) {
+      // Stats history not wired (pre-stats builds / legacy test rigs): there
+      // is nothing to archive, so keep the pre-B1 explicit-replace behavior.
+      await deps.sessions.clear();
+      return;
+    }
+    if (old.bootCount !== deps.bootInfo.getBootCount()) {
+      // The elapsed origin is gone: whatever ran is uncountable and is never
+      // guessed. Persist the anomalous loss BEFORE clearing; a failed notice
+      // write keeps the row so the loss is not silent (V1.3 §3).
+      await deps.history?.recordAnomaly('recovery-boot-changed', {
+        sessionId: old.sessionId,
+      });
+      await deps.sessions.clear();
+      return;
+    }
+    // Same boot: settle the run honestly. END counts the partial phase and
+    // marks STOPPED; the archive then decides (counted / expected exclusion).
+    const nowElapsedMs = deps.monotonic.nowElapsedMs();
+    const settled = applyRunnerControl(old, old.snapshot.steps, { type: 'END' }, nowElapsedMs)
+      .session;
+    const endWallMs = deps.wallClock.nowMs();
+    await deps.history?.archiveAndClear(settled, {
+      endWallMs,
+      endTimezoneOffsetMin: deviceTimezoneOffsetMin(endWallMs),
+    });
   }
 
   return {
@@ -157,9 +217,19 @@ export function createStartRoutineService(deps: StartRoutineServiceDeps): StartR
         if (!loaded) {
           return { kind: 'failed', error: '流程不存在' };
         }
+
+        // V1.3 DoD「替换先归档旧场」: the old session is settled and archived
+        // (or accounted for as an anomalous loss) BEFORE the new one exists.
+        // Any failure keeps the old row and aborts — no unarchived gap, and
+        // never "old lost + new not created".
+        const current = await deps.sessions.loadActive();
+        if (current.status === 'ok') {
+          await disposeReplacedSession(current.session);
+        }
+        // `corrupt`: the row is already gone (repository fail-safe).
+
         const { session, events } = buildSession(routineId, loaded);
-        // Explicit, user-confirmed replace (DELETE + INSERT) — R018.
-        await deps.sessions.replace(session);
+        await deps.sessions.create(session);
         return { kind: 'started', session, events };
       } catch (error) {
         return { kind: 'failed', error: error instanceof Error ? error.message : '无法开始流程' };

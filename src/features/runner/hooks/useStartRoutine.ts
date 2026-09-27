@@ -55,6 +55,7 @@ export function useStartRoutine(
         monotonic: services.monotonic,
         wallClock: services.wallClock,
         bootInfo: services.bootInfo,
+        history: services.history,
         generateId: services.generateId,
       }),
     [services],

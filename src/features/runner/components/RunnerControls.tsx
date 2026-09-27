@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native';
+import { useLanguage } from '../../../app/providers/LanguageContext';
 import { AppButton } from '../../../shared/components/AppButton';
 import { spacing } from '../../../shared/theme';
 
@@ -6,7 +7,8 @@ import { spacing } from '../../../shared/theme';
  * Playback controls (T053, FR-021..FR-025).
  *
  * Every control updates authoritative runner state; none of them just nudges a
- * visual counter (Constitution X).
+ * visual counter (Constitution X). All copy goes through the i18n dictionary
+ * (TASK-021-B4, HD-7) so a language switch takes effect immediately.
  */
 export function RunnerControls({
   isPaused,
@@ -27,46 +29,48 @@ export function RunnerControls({
   onSkip: () => void;
   onEnd: () => void;
 }) {
+  const { t } = useLanguage();
+
   return (
     <View>
       <AppButton
-        label={isPaused ? '继续' : '暂停'}
+        label={isPaused ? t('runner.resume') : t('runner.pause')}
         onPress={onTogglePause}
         testID="runner-pause"
-        accessibilityHint={isPaused ? '继续当前流程' : '暂停当前流程'}
+        accessibilityHint={isPaused ? t('runner.hint.resume') : t('runner.hint.pause')}
         style={styles.primary}
       />
       <View style={styles.row}>
         <AppButton
-          label="上一个"
+          label={t('runner.previous')}
           variant="secondary"
           onPress={onPrevious}
           disabled={!canGoPrevious}
           testID="runner-previous"
-          accessibilityHint={canGoPrevious ? '回到上一个动作并重新计时' : '已经是第一个动作'}
+          accessibilityHint={canGoPrevious ? t('runner.hint.previous') : t('runner.hint.firstStep')}
         />
         <AppButton
-          label="+10 秒"
+          label={t('runner.addTime')}
           variant="secondary"
           onPress={onAddTime}
           disabled={!canAddTime}
           testID="runner-add-time"
-          accessibilityHint="当前动作延长 10 秒"
+          accessibilityHint={t('runner.hint.addTime')}
         />
         <AppButton
-          label="跳过"
+          label={t('runner.skip')}
           variant="secondary"
           onPress={onSkip}
           testID="runner-skip"
-          accessibilityHint="直接进入下一个动作"
+          accessibilityHint={t('runner.hint.skip')}
         />
       </View>
       <AppButton
-        label="结束流程"
+        label={t('runner.end')}
         variant="danger"
         onPress={onEnd}
         testID="runner-end"
-        accessibilityHint="结束本次流程"
+        accessibilityHint={t('runner.hint.end')}
         style={styles.end}
       />
     </View>

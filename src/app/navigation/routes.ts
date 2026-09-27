@@ -9,6 +9,8 @@
  * renamed or deleted.
  */
 
+import type { CompletionOutcome } from '../../domain/statistics/history';
+
 export interface RouteParamsMap {
   Home: undefined;
   RoutineDetail: { routineId: string };
@@ -18,10 +20,18 @@ export interface RouteParamsMap {
     routineId: string;
     routineName: string;
     stepCount: number;
-    elapsedMs: number;
+    /**
+     * TASK-021-B4 (HD-6): actual action time of the session — the same
+     * ledger/rounding the statistics screen shows (pauses/transitions excluded).
+     */
+    actionMs: number;
+    /** Terminal-archive outcome the completion screen explains (retry on failure). */
+    outcome: CompletionOutcome;
   };
   ActionLibrary: undefined;
   Settings: undefined;
+  /** TASK-021-B2: standalone history & stats screen (no 4th tab, HD-4). */
+  Stats: undefined;
 }
 
 export type RouteName = keyof RouteParamsMap;
@@ -41,4 +51,5 @@ export const ROUTE_TITLES: Record<RouteName, string> = {
   Completion: '完成',
   ActionLibrary: '动作库',
   Settings: '设置',
+  Stats: '历史统计',
 };

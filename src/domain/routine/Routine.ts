@@ -7,6 +7,11 @@ export interface Routine extends TagFields {
   name: string;
   defaultDurationSec: number;
   defaultTransitionSec: number;
+  /**
+   * Training type (TASK-021-B1, HD-1=B). `null`/undefined = 未分类; only the
+   * editor (B3) writes it — the data layer never infers it.
+   */
+  trainingTypeId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

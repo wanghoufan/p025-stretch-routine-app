@@ -51,7 +51,6 @@ describe('active_session V2 migration (R010, R013)', () => {
 
     const version = await runMigrations(db);
     expect(version).toBe(latestSchemaVersion());
-    expect(version).toBe(3);
 
     // User-owned rows are untouched.
     expect((await db.get<{ name: string }>('SELECT name FROM actions WHERE id = ?', ['a1']))?.name).toBe(
@@ -100,8 +99,8 @@ describe('active_session V2 migration (R010, R013)', () => {
     await runMigrations(db);
     const again = await runMigrations(db);
 
-    expect(again).toBe(3);
-    expect(await getSchemaVersion(db)).toBe(3);
+    expect(again).toBe(latestSchemaVersion());
+    expect(await getSchemaVersion(db)).toBe(latestSchemaVersion());
     expect((await db.get<{ total: number }>('SELECT COUNT(*) AS total FROM routines'))?.total).toBe(1);
     db.close();
   });

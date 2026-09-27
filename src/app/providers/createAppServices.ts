@@ -5,6 +5,10 @@ import { runSeeds, repairSeededRoutines, type SeedOutcome, type SeedRepairResult
 import { createActionRepository, type ActionRepository } from '../../data/repositories/actionRepository';
 import { createRoutineRepository, type RoutineRepository } from '../../data/repositories/routineRepository';
 import { createSessionRepository, type SessionRepository } from '../../data/repositories/sessionRepository';
+import {
+  createSessionHistoryRepository,
+  type SessionHistoryRepository,
+} from '../../data/repositories/sessionHistoryRepository';
 import { createSettingsKeyValueStore } from '../../data/repositories/settingsKeyValueStore';
 import { createSettingsRepository, type SettingsRepository } from '../../features/settings/settingsRepository';
 import { SystemWallClock, DeviceMonotonicClock, type MonotonicClock, type WallClock } from '../../services/clock';
@@ -41,6 +45,7 @@ export interface AppServices {
   actions: ActionRepository;
   routines: RoutineRepository;
   sessions: SessionRepository;
+  history: SessionHistoryRepository;
   settings: SettingsRepository;
   generateId: IdGenerator;
 }
@@ -72,6 +77,7 @@ export function createAppServices(options: CreateAppServicesOptions = {}): AppSe
     actions: createActionRepository({ db, clock: wallClock, generateId: idGenerator }),
     routines: createRoutineRepository({ db, clock: wallClock, generateId: idGenerator }),
     sessions: createSessionRepository(db),
+    history: createSessionHistoryRepository(db),
     settings: createSettingsRepository(createSettingsKeyValueStore(db)),
     generateId: idGenerator,
   };

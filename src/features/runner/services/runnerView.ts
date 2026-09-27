@@ -4,6 +4,7 @@ import type { RunnerSnapshot } from './runnerController';
 import {
   currentStep,
   previousStep,
+  phaseElapsedMs,
   remainingMs,
   routineElapsedMs,
   routineProgress,
@@ -34,6 +35,15 @@ export interface RunnerView {
   totalMs: number;
   progress: number;
 
+  /**
+   * TASK-021-B4 (HD-6): actual action time settled so far — the same ledger
+   * the statistics archive stores, plus the still-running step phase.
+   * Excludes pauses and transitions; 0 for pre-upgrade sessions.
+   */
+  statsActionMs: number;
+  /** Terminal-archive outcome; see RunnerSnapshot.terminalOutcome. */
+  terminalOutcome: RunnerSnapshot['terminalOutcome'];
+
   isPaused: boolean;
   isTransition: boolean;
   canGoPrevious: boolean;
@@ -63,6 +73,8 @@ export function deriveRunnerView(snapshot: RunnerSnapshot): RunnerView {
     elapsedMs: 0,
     totalMs: routineTotalMs(steps),
     progress: 0,
+    statsActionMs: 0,
+    terminalOutcome: null,
     isPaused: false,
     isTransition: false,
     canGoPrevious: false,
@@ -90,6 +102,11 @@ export function deriveRunnerView(snapshot: RunnerSnapshot): RunnerView {
     remainingMs: remainingMs(session, nowElapsedMs),
     elapsedMs: routineElapsedMs(session, nowElapsedMs),
     progress: routineProgress(session, steps, nowElapsedMs),
+    // Pre-upgrade rows are never accounted (V1.3 §3), so gate on eligibility.
+    statsActionMs: session.statsEligible
+      ? session.statsTotalStepMs + (isStepPhase ? phaseElapsedMs(session, nowElapsedMs) : 0)
+      : 0,
+    terminalOutcome: snapshot.terminalOutcome,
     isPaused: isPaused(session.state),
     isTransition,
     canGoPrevious: session.currentStepIndex > 0,

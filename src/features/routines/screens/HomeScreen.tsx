@@ -116,6 +116,14 @@ export function HomeScreen() {
         style={styles.newButton}
       />
 
+      <AppButton
+        label={t('home.historyStats')}
+        variant="secondary"
+        onPress={() => navigation.navigate('Stats', undefined)}
+        testID="home-history-stats"
+        style={styles.statsEntry}
+      />
+
       {loading ? null : routines.length === 0 ? (
         <EmptyState
           title={t('home.noRoutines')}
@@ -152,6 +160,9 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   newButton: {
+    marginTop: spacing.sm,
+  },
+  statsEntry: {
     marginTop: spacing.sm,
   },
 });

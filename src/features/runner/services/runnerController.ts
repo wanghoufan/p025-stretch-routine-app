@@ -1,6 +1,6 @@
 import type { RoutineStep } from '../../../domain/routine/RoutineStep';
 import type { ActiveSession } from '../../../domain/session/ActiveSession';
-import { isPaused } from '../../../domain/session/RunnerState';
+import { isActive, isPaused } from '../../../domain/session/RunnerState';
 import type { AppSettings } from '../../settings/settingsModel';
 import type { MonotonicClock } from '../../../services/clock';
 import type { BootInfoProvider } from '../../../services/runtime/BootInfo';
@@ -15,7 +15,12 @@ import {
 } from '../domain/runnerMachine';
 import { buildCues } from './runnerCueCoordinator';
 import { recoverSession } from './sessionRecovery';
-import type { SessionPersistence } from './sessionPersistence';
+import {
+  anomalyCodeFromRecoveryReason,
+  type CompletionOutcome,
+} from '../../../domain/statistics/history';
+import type { SessionHistoryRepository } from '../../../data/repositories/sessionHistoryRepository';
+import type { SessionPersistence, TerminalArchiveOutcome } from './sessionPersistence';
 
 /**
  * Imperative runner controller (R019).
@@ -41,6 +46,31 @@ export interface RunnerSnapshot {
   /** Presentation time (monotonic). Only changes when the ticker fires. */
   nowElapsedMs: number;
   errorMessage: string | null;
+  /**
+   * TASK-021-B4: terminal-archive outcome for the completion screen. Null
+   * while the session is live; 'pending' from the terminal transition until
+   * the archive commit settles, so the completion UI can never report success
+   * before the write (V1.3 DoD: 防完成页先报成功).
+   */
+  terminalOutcome: CompletionOutcome | { status: 'pending' } | null;
+}
+
+/** Map the archive result onto the serializable completion status. */
+function toCompletionOutcome(
+  outcome: TerminalArchiveOutcome,
+): CompletionOutcome | { status: 'pending' } {
+  switch (outcome.kind) {
+    case 'archived':
+      return { status: 'archived' };
+    case 'excluded':
+      return { status: 'excluded', reason: outcome.reason };
+    case 'wall-date-untrusted':
+      return { status: 'wall-date-untrusted' };
+    case 'not-terminal':
+      // Unreachable: the controller only archives terminal sessions. Leaving
+      // the outcome pending is more honest than inventing a status.
+      return { status: 'pending' };
+  }
 }
 
 export interface RunnerControllerDeps {
@@ -52,6 +82,11 @@ export interface RunnerControllerDeps {
   /** Countdown background loop, reconciled from the runner state (TASK-011). */
   ambient: AmbientAudioService;
   settings: AppSettings;
+  /**
+   * Optional stats history (TASK-021-B1): discarding a stored session without
+   * it is an anomalous loss, so the reason is persisted before the row goes.
+   */
+  history?: Pick<SessionHistoryRepository, 'recordAnomaly'>;
 }
 
 const INITIAL_SNAPSHOT: RunnerSnapshot = {
@@ -61,6 +96,7 @@ const INITIAL_SNAPSHOT: RunnerSnapshot = {
   routineName: null,
   nowElapsedMs: 0,
   errorMessage: null,
+  terminalOutcome: null,
 };
 
 export class RunnerController {
@@ -108,6 +144,15 @@ export class RunnerController {
       }
 
       if (loaded.status === 'corrupt') {
+        try {
+          await this.recordAnomaly('recovery-corrupt');
+        } catch {
+          // Order note: the corrupt row has ALREADY been cleared by the
+          // repository fail-safe (loadActive), so there is nothing left to
+          // protect here; a failed notice write must not break the Runner.
+          // Deliberate clears that follow a notice (the discarded branch
+          // below, startRoutineService) keep the row when the notice fails.
+        }
         this.patch({ status: 'missing', errorMessage: `会话数据损坏，已安全清除：${loaded.reason}` });
         return;
       }
@@ -125,6 +170,15 @@ export class RunnerController {
       });
 
       if (outcome.kind === 'discarded') {
+        // An untrusted session's remaining time is never counted and never
+        // guessed: persist the anomalous loss before the row is cleared. The
+        // write must succeed first — a failed notice keeps the row and the
+        // error surfaces to the caller (V1.3 DoD: 写通知失败不能静默清行),
+        // same contract as startRoutineService's boot-changed path.
+        await this.recordAnomaly(
+          anomalyCodeFromRecoveryReason(outcome.reason),
+          loaded.session.sessionId,
+        );
         await this.deps.persistence.clear();
         this.patch({ status: 'missing', errorMessage: `无法恢复上次流程（${outcome.reason}）` });
         return;
@@ -206,7 +260,28 @@ export class RunnerController {
   private apply(session: ActiveSession, events: readonly RunnerEvent[], nowElapsedMs: number): void {
     this.patch({ session, nowElapsedMs });
     this.announceEvents(events);
-    void this.persist(session);
+    if (isActive(session.state)) {
+      void this.persist(session);
+      return;
+    }
+    // Terminal (TASK-021-B4): the completion screen waits for this outcome.
+    // A failure keeps the stored row (transaction rollback), so the session
+    // stays retryable from the completion screen.
+    this.patch({ terminalOutcome: { status: 'pending' } });
+    void this.archiveAndReport(session);
+  }
+
+  private async archiveAndReport(session: ActiveSession): Promise<void> {
+    let outcome: CompletionOutcome | { status: 'pending' };
+    try {
+      outcome = toCompletionOutcome(await this.deps.persistence.archiveTerminal(session));
+    } catch {
+      outcome = { status: 'failed' };
+    }
+    if (this.disposed || this.snapshot.session?.sessionId !== session.sessionId) {
+      return;
+    }
+    this.patch({ terminalOutcome: outcome });
   }
 
   private announceEvents(events: readonly RunnerEvent[]): void {
@@ -233,6 +308,18 @@ export class RunnerController {
 
   private async persist(session: ActiveSession): Promise<void> {
     await this.deps.persistence.save(session);
+  }
+
+  /**
+   * Persist an anomalous-loss notice. Deliberately NO swallowing: callers
+   * that clear the stored session afterwards must not clear it when the loss
+   * went unrecorded — the error propagates and the row survives (V1.3 DoD).
+   */
+  private async recordAnomaly(
+    reasonCode: Parameters<SessionHistoryRepository['recordAnomaly']>[0],
+    sessionId?: string,
+  ): Promise<void> {
+    await this.deps.history?.recordAnomaly(reasonCode, { sessionId: sessionId ?? null });
   }
 
   private patch(partial: Partial<RunnerSnapshot>): void {

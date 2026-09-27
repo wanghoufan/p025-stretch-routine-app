@@ -9,12 +9,15 @@ export function NoticeBanner({
   message,
   actionLabel,
   onAction,
+  actionTestID,
 }: {
   tone?: 'warning' | 'error';
   title: string;
   message?: string;
   actionLabel?: string;
   onAction?: () => void;
+  /** Optional testID forwarded to the action button (for screen tests). */
+  actionTestID?: string;
 }) {
   const isError = tone === 'error';
   return (
@@ -34,7 +37,7 @@ export function NoticeBanner({
         ) : null}
       </View>
       {actionLabel && onAction ? (
-        <AppButton label={actionLabel} onPress={onAction} variant="secondary" />
+        <AppButton label={actionLabel} onPress={onAction} variant="secondary" testID={actionTestID} />
       ) : null}
     </View>
   );

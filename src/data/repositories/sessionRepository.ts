@@ -29,7 +29,12 @@ export interface SessionRepository {
   create(session: ActiveSession): Promise<void>;
   /** UPDATE the existing session. Throws if no row exists. */
   save(session: ActiveSession): Promise<void>;
-  /** Explicit replace (DELETE + INSERT) after a confirmed conflict choice. */
+  /**
+   * Explicit replace (DELETE + INSERT) after a confirmed conflict choice.
+   * Low-level primitive only: it does NOT archive the replaced session, so
+   * the user-facing replace flow (`StartRoutineService.replaceWith`) must go
+   * through the history archive first and never call this for a live session.
+   */
   replace(session: ActiveSession): Promise<void>;
   clear(): Promise<void>;
 }
@@ -39,14 +44,16 @@ const INSERT_SQL = `INSERT INTO active_session
    phase_started_elapsed_ms, paused_at_elapsed_ms, accumulated_pause_ms,
    effective_step_duration_ms, effective_transition_duration_ms, runtime_extension_ms,
    completed_phase_ms, last_updated_elapsed_ms, updated_at_wall_ms, boot_count,
+   training_type_id, stats_eligible, stats_total_step_ms, stats_step_ledger_json,
    snapshot_version, snapshot)
- VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+ VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
 const UPDATE_SQL = `UPDATE active_session SET
    session_id = ?, routine_id = ?, routine_name = ?, state = ?, current_step_index = ?,
    phase_started_elapsed_ms = ?, paused_at_elapsed_ms = ?, accumulated_pause_ms = ?,
    effective_step_duration_ms = ?, effective_transition_duration_ms = ?, runtime_extension_ms = ?,
    completed_phase_ms = ?, last_updated_elapsed_ms = ?, updated_at_wall_ms = ?, boot_count = ?,
+   training_type_id = ?, stats_eligible = ?, stats_total_step_ms = ?, stats_step_ledger_json = ?,
    snapshot_version = ?, snapshot = ?
  WHERE id = 1`;
 
@@ -67,6 +74,10 @@ function toParams(session: ActiveSession): SqlParams {
     session.lastUpdatedElapsedMs,
     session.updatedAtWallMs,
     session.bootCount,
+    session.trainingTypeId,
+    session.statsEligible ? 1 : 0,
+    session.statsTotalStepMs,
+    JSON.stringify(session.statsStepLedger ?? {}),
     session.snapshotVersion,
     JSON.stringify(session.snapshot),
   ];
