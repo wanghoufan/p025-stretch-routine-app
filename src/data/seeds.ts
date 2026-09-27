@@ -76,6 +76,12 @@ export interface SeedRoutineDefinition {
    * Hand-assigned per shipped routine — never inferred from the name or the
    * category tags at runtime. Must reference a `training_types.type_id` seeded
    * by the V4 migration, so a wrong id fails loudly (FK) instead of guessing.
+   *
+   * Scope note (TASK-021-F1, 口径收窄): "no name-based guessing" applies to
+   * realtime writes only — the new inserts below and the repair pass. The
+   * one-time V5 backfill deliberately matches EXISTING rows by these fixed
+   * catalog names to type pre-V4 seed rows; a same-named user routine at
+   * worst lands in the matching stats bucket, never corrupted.
    */
   trainingTypeId: string;
   /** Ordered steps; bilateral Actions expand into a left/right pair. */
@@ -489,8 +495,9 @@ async function insertSeedRoutine(
       routine.name.trim().slice(0, ROUTINE_NAME_MAX_LENGTH),
       DEFAULT_STEP_DEFAULTS.durationSec,
       defaultTransitionSec,
-      // Hand-assigned in the definition (HD-5): no name/tag inference here. A
-      // foreign key makes a typo'd id fail loudly instead of guessing.
+      // Hand-assigned in the definition (HD-5): no name/tag inference for
+      // realtime writes. Existing rows are typed once by the V5 migration
+      // matching the fixed seed names (TASK-021-F1 口径收窄).
       routine.trainingTypeId,
       joinTagList(routine.category),
       routine.difficulty ?? null,

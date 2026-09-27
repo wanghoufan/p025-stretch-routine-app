@@ -15,6 +15,25 @@ export interface Migration {
 
 export const INITIAL_SCHEMA_VERSION = 1;
 
+/**
+ * TASK-021-F1: frozen snapshot of the V1.3 seed→type mapping, grouped by type
+ * for the backfill UPDATEs. A test asserts this equals the `SEED_ROUTINES`
+ * definitions row by row, so the two can never drift apart silently.
+ */
+export const SEED_TYPE_BACKFILL_V5: readonly (readonly [typeId: string, names: readonly string[]])[] =
+  [
+    ['STRETCH_RELAX', ['晨起全身拉伸', '久坐办公族拉伸', '跑后下肢放松', '办公室久坐放松', '睡前全身放松']],
+    ['WARMUP', ['5分钟快速热身']],
+    ['CORE', ['初级核心', '中级核心', '高级核心']],
+  ];
+
+const SEED_TYPE_BACKFILL_STATEMENTS_V5: readonly string[] = SEED_TYPE_BACKFILL_V5.map(
+  ([typeId, names]) =>
+    `UPDATE routines SET training_type_id = '${typeId}'
+       WHERE training_type_id IS NULL
+         AND name IN (${names.map((name) => `'${name}'`).join(', ')})`,
+);
+
 export const MIGRATIONS: readonly Migration[] = [
   {
     version: 1,
@@ -206,6 +225,33 @@ export const MIGRATIONS: readonly Migration[] = [
         dismissed_at_wall_ms INTEGER
       )`,
     ],
+  },
+  {
+    version: 5,
+    name: 'seed_training_type_backfill',
+    /**
+     * TASK-021-F1 (真机 QA 缺陷修复): one-time backfill of training types onto
+     * seed routines that already existed before V4 introduced the column.
+     *
+     * On upgraded installs every shipped routine stayed in the「未分类」stats
+     * bucket forever: `repairSeededRoutines` only re-inserts a seed when it is
+     * *missing*, so pre-V4 rows never received a `training_type_id`.
+     *
+     * 口径收窄（相对 B1 的「不凭名字猜」）: "no name-based guessing" applies
+     * to realtime writes only (new inserts / copies / the repair pass). This
+     * ONE-TIME backfill is deliberately allowed to match by the nine fixed
+     * seed names, because the project already identifies shipped routines by
+     * these exact names (repair pass and clear-examples both do), and a
+     * same-named user routine at worst lands in the matching stats bucket —
+     * no data is corrupted, only the classification axis is affected.
+     *
+     * Only NULLs are filled: a row whose type the user already chose (or that
+     * a fresh install's seed wrote) is never overwritten. Re-running is safe
+     * via the version pragma AND the `IS NULL` guard. Archived
+     * `session_history` rows are immutable snapshots (V1.3) and are NOT
+     * touched — old archived records stay in「未分类」by design.
+     */
+    statements: [...SEED_TYPE_BACKFILL_STATEMENTS_V5],
   },
 ];
 

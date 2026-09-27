@@ -177,14 +177,13 @@ describe('history/stats migration V4 (TASK-021-B1)', () => {
     db.close();
   });
 
-  it('is idempotent: running twice keeps version 4 and does not duplicate type rows', async () => {
+  it('is idempotent: running twice lands on the latest version and does not duplicate type rows', async () => {
     const db = await createDatabaseAtVersion(3);
     await runMigrations(db);
     const again = await runMigrations(db);
 
     expect(again).toBe(latestSchemaVersion());
-    expect(again).toBe(4);
-    expect(await getSchemaVersion(db)).toBe(4);
+    expect(await getSchemaVersion(db)).toBe(latestSchemaVersion());
     expect(
       (await db.get<{ total: number }>('SELECT COUNT(*) AS total FROM training_types'))?.total,
     ).toBe(3);
