@@ -16,7 +16,7 @@
   - P0-5：native R004-R006 / R022-R034（FGS / Doze / Android 版本矩阵）待排期；本地构建链已通，可随时开工
 - 当前 Task（正干到哪）：**无进行中任务**。TASK-018（动作库动态部位筛选 B-4）全链完成并放行；后续候选见「二、下一步任务」
 - 执行链/Session（仅真 resume 通道填；TM 只记录/引用，不手造 ID）：builder 走 opencode 通道 `opencode-go/deepseek-v4.1-flash`（旧 codebuddy 通道作废；TASK-018 同链续 session 返工 3 轮）；supervisor 走 opencode `opencode-go/muse-spark-1.3-contributor`；planner/product-reviewer/senior 走 codex；code-reviewer/experience-recorder/neat-freak 本窗口 subagent；qa 本窗口直派 + adb/Expo 走本窗口 bash 直驱
-- 账本：`docs/model/TASK-MODEL-LOG.jsonl` **20 行**、`docs/model/DISPATCH-LOG.jsonl` **30 行**，两文件 schema 第二道校验均 exit 0（supervisor 已复检）
+- 账本：`docs/model/TASK-MODEL-LOG.jsonl` **23 行**、`docs/model/DISPATCH-LOG.jsonl` **35 行**，两文件 schema 第二道校验均 exit 0（supervisor 已复检；neat-freak 2026-09-27 复核 `node scripts/model/check-ledger.mjs docs/model` 仍 exit 0）
 - 未闭环评审意见（还没改的）：
   - 已 CLOSED：TASK-018 的 P1-1（可见归属缺失）、reviewer P2-1（两条 DoD 断言缺失）、qa P2（搜索态两次点按）、qa P3-1（单字 chip 宽 42.5dp<48）、P3-5（陈旧注释）——均随 B-4 ⑨⑩⑪ 与对应集成断言闭环，⑫ 真机复验通过
   - 挂账（**非阻塞**，不属 B-4 范围，详见 `docs/review/CODE_REVIEW-task018-dynamic-filter.md`）：
@@ -31,6 +31,7 @@
 - 收尾记一笔（neat-freak）：2026-09-19 大交接收尾——文档对齐完成（`PLAN-TASK-018-…md` 状态字段同步为「全链完成并放行」、qa 报告尾部追加收尾核对，首轮 OPEN 项已被复验 CLOSED 取代）；清理未跟踪系统垃圾 `.DS_Store`×5 与 `.expo/dev/logs` 临时日志×2（零业务/仓库文件改动，`git status` 与清理前一致）；账本只校验不改；未决已落位。**遗留待人工确认**：见「三、注意事项与规矩」的 U-1 / U-2 / U-3
 - 收尾记一笔（neat-freak）：2026-09-21 Motion Core V1 纯UI换皮收尾——分支 `visual-optimization` 合入 main：theme 深蓝 token＋共享组件＋7 页磁贴/配色＋App Icon（`assets/icons/motion-core/001..050`＋`motion-core-*`），零业务改动；tsc 干净＋258/258 全绿；xagapro/ruby/pearl 三台 release 包装机冷启动通过；APK 留 `releases/`（git 忽略），24MB 资源原包留磁盘、`.gitignore` 止其进仓；Metro 8095 已停。
 - 收尾记一笔：2026-09-21 App 图标修复——首版 release 包图标未变，根因为 `android/` 原生目录已存在、`expo run` 未重跑 prebuild（app.json 新图标未进 `res/`）；已 `expo prebuild --platform android`＋gradle 重编＋三台重装，抽屉图标确认为新图（深蓝底青色小人），冷启动正常；新 APK 已覆盖 `releases/stretch-routine-motioncore-v1-local.apk`。
+- 收尾记一笔（neat-freak）：2026-09-27 TASK-020 启动画面换肤收尾——删除零引用孤儿资源 5 个（`assets/splash-icon.png`、`assets/icon.png`、`assets/android-icon-background/foreground/monochrome.png`，均为 Expo 模板默认图，全仓 grep 自证零引用；它们会被 `assetBundlePatterns: assets/**/*` 打进 APK，删后 `favicon.png`（web.favicon 引用）与品牌套 `motion-core-*` 全部保留、不动）；清理未跟踪系统垃圾 `.DS_Store`×3（根/docs/assets）与 `.expo/dev/logs/{start,export}.log`；HANDOFF 账本行数对齐真实（TASK 23 / DISPATCH 35，`check-ledger.mjs` exit 0）；`npm run typecheck` 0 错、`npm test` 36 套件/263 用例全绿；未决见 §3.4 U-2（刷新）/U-4（新增）。仅删文件+改本 HANDOFF，未 commit/push（交 TM）。
 
 ---
 
@@ -131,8 +132,9 @@
 ### 3.4 待人工确认（neat-freak 提出，TM 未擅改）
 
 - **U-1**：`docs/pm/PRODUCT_PLAN_V1.2.md` 里「当前机器无 JDK / 构建阻塞」等 4 处描述与现状不符（JDK17+SDK 已装、本地构建链已通）；该文件自身 `PLAN_GATE：IN_PROGRESS` 也与 HANDOFF 的 `APPROVED` 不一致。**因它是 DEV_BASELINE，改它属 Plan 变更邻域（Change C），TM 未擅改**。现状以本 HANDOFF 为准；若要改 Plan 正文，请用户拍板走 Change C。
-- **U-2**：`README.md:24-25` 要求 `Orca 通用编排者持续推进协议.md`、`Orca 编排治理监督者提示词.md` 放 `docs/prompts/`、`归位表.template.md` 放 `docs/templates/`，但三者实际在项目根，而 `AGENTS.md:76`、`编排者提示词.md:13` 按 `docs/prompts/` 引用 → 引用悬空。**涉及治理布局且 AGENTS 禁改**，请用户裁定「搬文件」还是「改引用/留映射」。
+- **U-2**（neat-freak 2026-09-27 刷新现状）：`README.md:24-25` 要求 `Orca 通用编排者持续推进协议.md`/`Orca 编排治理监督者提示词.md` 放 `docs/prompts/`、`归位表.template.md` 放 `docs/templates/`。现状：`docs/prompts/` 已含两份 Orca 文件、`docs/templates/` 已含 `归位表.template.md`，且 `AGENTS.md:94`、`编排者提示词.md:13` 均按 `docs/prompts/` 引用——**引用已通、不再悬空**。但**根目录仍各留一份重复件**：根 `Orca 编排治理监督者提示词.md`、根 `归位表.template.md` 与 docs 内副本逐字节相同（纯重复）；根 `Orca 通用编排者持续推进协议.md`（28504B / 2026-09-13，写「9+1」）**旧于** `docs/prompts/` 版本（28518B / 2026-09-19，已更到「9+1＋1」）——即根留的是过期副本。**涉及治理布局且 AGENTS 禁改**，请用户裁定是否删除根目录这三份重复/过期件（删后引用仍指向 docs/prompts 与 docs/templates，不影响任何引用）。
 - **U-3**：`TASK-MODEL-LOG.jsonl` 无 TASK-017 行（只有 DISPATCH 行）——与「TASK-017 未收口」一致；是否补记由用户/TM 定（账本红线只校验不改）。
+- **U-4**（neat-freak 2026-09-27 新提出）：根 `经验一句话.md` 有整段重复——第 26–40 行把第 5–15 行的通用经验（含重复的 `# 经验一句话` 标题）原样再抄一遍，其后才是本项目独有经验（2026-09-18 起）。该文件自称「只追加」且归 experience-recorder 管，**neat-freak 未擅改**；是否去重请用户/TM 定（去重＝纯删除重复行，零信息损失）。既有封存件 `经验一句话.md.旧版-2026-09-27` 未动。
 
 ### 3.5 构建环境（一句话备忘，详细整理由用户另派智能体负责）
 
@@ -190,5 +192,5 @@
 - **防闪烁**：`preventAutoHideAsync` 放模块作用域不 await（挂住原生 splash 到本地 DB 初始化完成），`hideAsync` 在 `boot.status` 离开 loading 后 rAF 调用，**错误分支也放行**（否则初始化失败会被 splash 永久盖死）。App.tsx boot 屏与原生 splash 同图源、同 100dp、同居中，过渡帧证实图标原位淡出、无跳变。
 - **真机验收**：xagapro(API31) / ruby(API34) / pearl(API35) 三台覆盖安装成功（**全程未卸载，用户数据零丢失**），逐帧录屏 + PIL 像素统计取证：主内容区全程 `#041B3D`，**纯白帧 0、纯黑帧 0**。冷启动 526ms。报告 `docs/qa/task020-brand-splash.md`。
 - **顺手修掉的既有 P1**：`app.json` `versionCode` 2→3。此前有人手改未跟踪的 `android/app/build.gradle` 为 3 未回写真源，prebuild 又重置为 2，导致装机一律 `INSTALL_FAILED_VERSION_DOWNGRADE`（`-d` 也不放行）。口径已落 `docs/sop/android.md` §5.1。
-- **挂账非阻塞**：①`app.json` 顶层 `splash` 与插件 props 双写（权威源＝插件 props，口径同落 §5.1）；②`assets/splash-icon.png`（17KB Expo 靶心图）已成零引用孤儿文件，仍会被 `assets/**/*` 打进包，可择机清；③splash 期间底部系统导航栏约 130ms 为纯黑（Android 12+ 固有行为）；④「Motion Core 拉伸」字样因 DB 初始化 <100ms 未被看到，**要不要加 splash 最短显示时长属观感决策，未擅自加**；⑤splash 图标自带浅蓝圆角方块底，在深蓝上可见方形边界（素材级微调）。
+- **挂账非阻塞**：①`app.json` 顶层 `splash` 与插件 props 双写（权威源＝插件 props，口径同落 §5.1）；②`assets/splash-icon.png`（17KB Expo 靶心图）原为零引用孤儿、会被 `assets/**/*` 打进包——**已清（2026-09-27 neat-freak，同批删除 `assets/icon.png`、`assets/android-icon-background/foreground/monochrome.png` 共 5 个 Expo 模板默认图）**；③splash 期间底部系统导航栏约 130ms 为纯黑（Android 12+ 固有行为）；④「Motion Core 拉伸」字样因 DB 初始化 <100ms 未被看到，**要不要加 splash 最短显示时长属观感决策，未擅自加**；⑤splash 图标自带浅蓝圆角方块底，在深蓝上可见方形边界（素材级微调）。
 - **出包铁律（新增）**：`android/` 已存在时 `expo run:android` 不重跑 prebuild（2026-09-21 图标修复已踩过同坑），**出包前必须先 `npx expo prebuild --platform android` 再 gradle**，否则按旧 versionCode 打包并误判成"修复没生效"。
