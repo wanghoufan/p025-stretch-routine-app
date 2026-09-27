@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { NativeModules, Platform } from 'react-native';
 import { translate, type Language } from '../../shared/i18n';
 import { useServices } from './ServicesContext';
 
@@ -11,6 +12,20 @@ export interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 const STORAGE_KEY = 'app_language';
+
+function detectSystemLanguage(): Language {
+  try {
+    if (Platform.OS === 'ios') {
+      const locale = NativeModules.SettingsManager?.settings?.AppleLocale
+        ?? NativeModules.SettingsManager?.settings?.AppleLanguages?.[0];
+      return locale?.startsWith('en') ? 'en' : 'zh';
+    }
+    const locale = NativeModules.I18nManager?.localeIdentifier;
+    return locale?.startsWith('en') ? 'en' : 'zh';
+  } catch {
+    return 'zh';
+  }
+}
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const services = useServices();
@@ -25,6 +40,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       if (stored === 'zh' || stored === 'en') {
         languageRef.current = stored;
         setLanguageState(stored);
+      } else {
+        const systemLang = detectSystemLanguage();
+        languageRef.current = systemLang;
+        setLanguageState(systemLang);
       }
     }).catch(() => {});
     return () => { cancelled = true; };
