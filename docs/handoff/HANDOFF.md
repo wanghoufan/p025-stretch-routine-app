@@ -33,6 +33,7 @@
 - 收尾记一笔：2026-09-21 App 图标修复——首版 release 包图标未变，根因为 `android/` 原生目录已存在、`expo run` 未重跑 prebuild（app.json 新图标未进 `res/`）；已 `expo prebuild --platform android`＋gradle 重编＋三台重装，抽屉图标确认为新图（深蓝底青色小人），冷启动正常；新 APK 已覆盖 `releases/stretch-routine-motioncore-v1-local.apk`。
 - 收尾记一笔（neat-freak）：2026-09-27 TASK-020 启动画面换肤收尾——删除零引用孤儿资源 5 个（`assets/splash-icon.png`、`assets/icon.png`、`assets/android-icon-background/foreground/monochrome.png`，均为 Expo 模板默认图，全仓 grep 自证零引用；它们会被 `assetBundlePatterns: assets/**/*` 打进 APK，删后 `favicon.png`（web.favicon 引用）与品牌套 `motion-core-*` 全部保留、不动）；清理未跟踪系统垃圾 `.DS_Store`×3（根/docs/assets）与 `.expo/dev/logs/{start,export}.log`；HANDOFF 账本行数对齐真实（TASK 23 / DISPATCH 35，`check-ledger.mjs` exit 0）；`npm run typecheck` 0 错、`npm test` 36 套件/263 用例全绿；未决见 §3.4 U-2（刷新）/U-4（新增）。仅删文件+改本 HANDOFF，未 commit/push（交 TM）。
 - 收尾记一笔（neat-freak）：2026-09-27 **同批追加·U-2 用户拍板「处理」**——点名靠 README「勿留根」口径处置根目录治理布局：**删 2**（根 `Orca 通用编排者持续推进协议.md` 过期版、根 `Orca 编排治理监督者提示词.md` 重复版，`git rm`）**移 1**（根 `归位表.template.md`，`git mv -f` 去重——`docs/templates/` 本已有自 `90bd862` 起跟踪且逐字节相同的模板源，现仅留指定位置，与已填产物 `docs/templates/归位表.md` 共存）**留 1**（根 `编排者提示词.md` 按 README:23 原位不动）；全仓 grep 自证所有引用者（README/AGENTS/编排者提示词/迁移整理提示词/docs 归位表/scripts）**全部走 `docs/prompts/` 路径、零根路径引用**；更正上轮「引用悬空」误述（引用所指文件一直在 `docs/prompts/`，从未悬空）；新增 §3.4 **U-5**（`迁移整理提示词.md:13` 自相矛盾，属中央治理布局，未擅改，建议移出「铺到根」清单，留用户/中央治理定）。本轮只动 3 个根文件＋本 HANDOFF，未碰 `AGENTS.md`/两账本/业务代码/`经验一句话.md`（U-4 由 experience-recorder 并行处理）。
+- 收尾记一笔（neat-freak）：2026-09-27 **TTS 记录去重收尾**——①**TTS 信息三处收敛为一处**：TASK-021 章节「语音播报与「离线 TTS」现状」专节定为唯一权威段（信息最全）；「设备侧发现」两条压缩为指针；§3.4 U-7 改为「已调研完毕、用户决定暂不处理」指针（不再是待拍板项），逐条核对无信息丢失；②**两条过时历史结论加失效/口径更新标注**（不删历史）：任务备注「音频铁律」的 Sherpa xiao_ya「初听通过」加 ⚠ 失效标注（BZNSYP Non-commercial，不可商用，指针专节坑 2，USB 铁律部分保留）；「真机无声根因」行加口径更新（底层根因＝`tts_default_synth=null` 静默无声，附现行排查顺序，指针专节）；③**PLAN-TASK-018 历史卡顶部加设备口径指针**（文中 xagapro/Expo Go 为当时记录，现行只用 12 Pro，历史正文不改）；④核对：工作区干净、`modules/` 4 源码文件入仓且 `**/android/build/`／根 `android/`／`releases/` 仍被忽略、README 为治理模板包说明无业务功能清单（无需加「历史统计」）、U-5/U-6 状态无新变化；本轮零业务改动，三道门禁 typecheck／47 套件 352 用例／check-ledger 过后 commit+push main（用户已授权）。
 - 收尾记一笔（neat-freak）：2026-09-27 **TASK-021 收工洁癖收尾**——①**旧设备口径全仓统一**：`PRODUCT_PLAN_V1.3` 6 处 `xagapro` 改为 `12 Pro（indq5xfi6hovay4d）`（与其 Target Users 设备条款对齐，另把文内 `WAITING_HUMAN_APPROVAL` 状态行对齐 HANDOFF 的 `DEVELOP`）；本 HANDOFF §2.2／§3.1.3／任务备注 同步为「真机验收只用 12 Pro」；历史 QA/review 报告属审计凭据不改（`task021-r006.md` 已自带设备口径说明）；②**计划取代关系补指针**：V1.1／V1.2 顶部各加一行补注（V1.1 已被 V1.2 接续、V1.2 被 V1.3 局部取代，正文与历史结论未动）；`PLAN-TASK-021` 顶部加收工状态指针；V1.3 种子段落加 **F1 实施补注**（「既存同名种子不赋型」已被 v5 存量回填收窄为「实时新增不猜、存量回填允许名字匹配」）；③**清理**：根 `.DS_Store`×1（`temp/` 与 `.expo/dev/logs` 前轮已清空，`temp` 内换肤通用提示词模板随目录一并消失，其方法论已由 `docs/qa/task020-brand-splash.md`＋HANDOFF 启动画面专节＋经验一句话「CNG 真源」吸收）；④**核实 `.gitignore`**：`modules/` 入仓 4 文件全为手写源码、`**/android/build/`／根 `android/`／`releases/` 实测被忽略、仓内零构建产物；`scripts/decision/evals/*.log` 为脱敏真调证据存档非垃圾，保留；⑤§3.4 更新：U-1 消解／U-4 已处理（`cd85cc7`）／新增 U-6、U-7；docs 落盘清单补齐 TASK-020/021 产出；账本只校验不改。三道门禁 typecheck／47 套件 352 用例／check-ledger 全过后 commit+push main（用户已授权）。
 
 ---
@@ -146,7 +147,7 @@
 - **U-3**：`TASK-MODEL-LOG.jsonl` 无 TASK-017 行（只有 DISPATCH 行）——与「TASK-017 未收口」一致；是否补记由用户/TM 定（账本红线只校验不改）。
 - **U-4**（neat-freak 2026-09-27 新提出）：根 `经验一句话.md` 有整段重复——第 26–40 行把第 5–15 行的通用经验（含重复的 `# 经验一句话` 标题）原样再抄一遍，其后才是本项目独有经验（2026-09-18 起）。该文件自称「只追加」且归 experience-recorder 管，**neat-freak 未擅改**；是否去重请用户/TM 定（去重＝纯删除重复行，零信息损失）。既有封存件 `经验一句话.md.旧版-2026-09-27` 未动。【2026-09-27 状态更新】用户拍板「处理」，已随 commit `cd85cc7` 去重完成；封存件未动。**U-4 已处理。**
 - **U-6**（neat-freak 2026-09-27 补记，源自 TASK-021 治理挂账）：TASK-021 的 supervisor 复检实派本窗口 `codebuddy/glm-5.3-flash`，与 override 表 supervisor 行（opencode-go/muse-spark-1.3-contributor）不符——系用户直接指派（换谁用户定），DISPATCH-LOG 已留痕，**待用户追认或改 override 表**。
-- **U-7**（neat-freak 2026-09-27 补记，源自 TASK-021 R006 设备侧发现）：12 Pro 上 mibrain TTS 引擎合成走网络（logcat 实证 `AivsSDK ... http://119.147.123.233:80`），与项目「本地优先、离线可用」原则冲突；且新设备需一次性手动设默认 TTS 引擎（12 Pro 出厂 `tts_default_synth=null` 会静默无声，已设 `com.xiaomi.mibrain.speech`/`zh-CN` 修复）。离线语音包方案待用户/后续任务定，不在本仓代码范围。
+- **U-7（已调研完毕，转为指针）**：12 Pro 上 mibrain TTS 走网络、新设备 `tts_default_synth=null` 静默无声——2026-09-27 TM 离线 TTS 调研完毕，**完整现状、两条踩坑与离线方案结论统一记录在 TASK-021 章节专节「语音播报与「离线 TTS」现状」（见下文，权威段）**；用户已拍板「算了先这样，不折腾了」，**暂不处理**，不再是待拍板项。
 
 ### 3.5 构建环境（一句话备忘，详细整理由用户另派智能体负责）
 
@@ -166,6 +167,7 @@
 - 工具：node24 / npm11 / eas / codebuddy / codex / opencode 可用；expo CLI 需 `npx`。
 - 用户指令：不中断、不提问、小问题自治、疑难挂账、完成后 adb 推送安装到手机。2026-09-18 追加：builder 双模型限额时切 codex/gpt-5.6-luna 续跑禁停摆；禁音令已解除，现在可做语音测试。
 - 音频铁律（2026-09-18 真机实证）：USB 线连着时手机无声，拔线即恢复；一切「听不到」先查线缆再查引擎。Expo Go + Sherpa xiao_ya 神经音用户初听通过；eSpeak 仅备用。听测时拔线（adb 会断，测完再连）。
+  - **【⚠ 本句部分失效·2026-09-27 调研更正】**「Sherpa xiao_ya 用户初听通过」**仅代表当时听感，≠可商用**——`vits-piper-zh_CN-xiao_ya-*` 源自 `rhasspy/piper-voices`，MODEL_CARD 标注数据源 BZNSYP 为 **Non-commercial use，任何 int8/fp32 变体都不可商用，不可用于本项目**，勿再选型回归；详见 TASK-021 章节「语音播报与「离线 TTS」现状」专节坑 2。本条其余部分（USB 铁律、听测拔线）仍然有效。
 - B-1 局部 Requirement（种子数据，不召 Planner）：①首版 14 动作 + 2 流程；TASK-010 已扩到 28 动作 + 5 模板 + 设置页一键清除（`seed_examples_cleared` 标记防复活，改名/自建数据不动）；②幂等：`seed_version=1`，仅全空播种；老库 repair 补新模板只增不改。后续 TASK-012 扩到 **59 动作 / 9 模板 / 标签 V3 迁移**。
 - B-2 局部 Requirement（倒计时背景音，用户 2026-09-18 修订：自然音三段替换为三首轻音乐）：①设置页「倒计时背景音」5 选 1（无声/滴答/轻音乐·晨曦/轻音乐·静夜/轻音乐·空山，默认滴答）；②背景音仅在 `RUNNING_STEP`/`TRANSITION` 播放，暂停/结束/完成即停；③TTS 播报时背景音不掐断计时、不吞 cue（音量 coexistence，有条件 duck）；④音频本地打包离线可用、有出处 license 记录；⑤DoD：5 选项切换单测 + 启停跟随状态机测试 + 真机 sandwich（Expo Go）验证；⑥用户终验通过后 10-01 EAS preview 打包 adb 装机（额度所限，之前不承诺 APK 推送）。
 - B-3 局部 Requirement（动作库分组筛选，用户 2026-09-18 批准，**③已被 B-4 取代、②的二级分组已并入 B-4 的 chips**）：①动作库按场景折叠分组（拉伸/热身/核心训练，默认只展第一组，组头数量 badge）；②拉伸组内按部位二级分组（颈肩胸背腰腹髋臀腿小腿全身）；③顶部筛选 chips（难度低中高）+ 搜索框，筛选后只显命中分组；④流程模板页按场景分组（日常拉伸/健身前后/热身/核心，难度角标）；⑤DoD：分组/筛选/搜索单测 + 集成测试 + 真机验证。
@@ -193,6 +195,7 @@
 ## 真机联调（2026-09-24）
 - Picker总数+分组筛选、Routine分组选择+自定义分组、设置页测试语音按钮三处改动，随release包真机验收通过（jest 36套件/263用例全绿）
 - 真机无声根因：speaker音量0＋sherpa引擎无中文包（切mibrain）＋投屏/录屏劫持remote_submix；均设备侧修复，无业务代码改动
+  - **【口径更新·2026-09-27】**上行为当时判定，已被后续调研细化：12 Pro「无声」的更底层根因是出厂 `tts_default_synth=null`（`expo-speech` 无处路由、**静默无声**），「sherpa 无中文包→切 mibrain」只是当时的绕过动作，且 mibrain 合成**走网络**、并非离线方案；与下方 TASK-021 专节的排查顺序合并阅读：**排查任何「没声音」先查 `tts_default_synth`，再杀录屏/投屏两进程，再查 USB 线**。详见 TASK-021 章节「语音播报与「离线 TTS」现状」专节。
 - 当前手机上为release包（离线独立运行）；CHANGE_REQUEST：NONE
 
 ---
@@ -226,8 +229,7 @@
 
 ### 设备侧发现（不在本任务范围，已记录）
 
-- **12 Pro 原先没有默认 TTS 引擎**（`tts_default_synth=null`）导致 App 静默无声；且 `com.miui.screenrecorder` / `com.xiaomi.mirror` 运行时占用 `remote_submix` 抢走扬声器音频。已设 `com.xiaomi.mibrain.speech` / `zh-CN` 并停掉两进程解决。**新设备需一次性设置，非本仓代码问题。**
-- **mibrain 引擎的 TTS 合成走网络**（logcat 可见 `AivsSDK ... http://119.147.123.233:80`），与项目「本地优先、离线可用」原则冲突；离线播报需系统集成语音包。**已记为待处理项。**
+> **指针**：设备侧发现已与 2026-09-27 离线 TTS 调研合并，统一收口至下方专节「**语音播报与「离线 TTS」现状**」（唯一权威段），此处不再重复叙述，以免两处漂移。
 
 ### 遗留挂账
 

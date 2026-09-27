@@ -3,6 +3,8 @@
 - DEV_BASELINE：PRODUCT_PLAN_V1.2
 - CHANGE_REQUEST：B（用户明确指定的 Phase2 设计复核；不触发 Change C，不修改 Plan Version / DEV_BASELINE）
 
+> **【设备口径指针·2026-09-27 neat-freak】**本卡为已完成历史卡：文中 `xagapro` / Expo Go 均为 2026-09-19 当时真机验收的如实记录；**现行真机验收口径＝只用 Redmi Note 12 Pro（`indq5xfi6hovay4d`），不要用别的手机**（见 HANDOFF §2.2／§3.1 第 3 条）。历史正文不改。
+
 ## Product Goal
 
 让用户在动作库中按当前关注的场景快速筛选部位，同时保留全局名称搜索和多场景独立展开能力；移除动作库顶部难度筛选，但不改动作难度数据、编辑能力和流程模板页。
