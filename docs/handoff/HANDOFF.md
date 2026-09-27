@@ -32,6 +32,7 @@
 - 收尾记一笔（neat-freak）：2026-09-21 Motion Core V1 纯UI换皮收尾——分支 `visual-optimization` 合入 main：theme 深蓝 token＋共享组件＋7 页磁贴/配色＋App Icon（`assets/icons/motion-core/001..050`＋`motion-core-*`），零业务改动；tsc 干净＋258/258 全绿；xagapro/ruby/pearl 三台 release 包装机冷启动通过；APK 留 `releases/`（git 忽略），24MB 资源原包留磁盘、`.gitignore` 止其进仓；Metro 8095 已停。
 - 收尾记一笔：2026-09-21 App 图标修复——首版 release 包图标未变，根因为 `android/` 原生目录已存在、`expo run` 未重跑 prebuild（app.json 新图标未进 `res/`）；已 `expo prebuild --platform android`＋gradle 重编＋三台重装，抽屉图标确认为新图（深蓝底青色小人），冷启动正常；新 APK 已覆盖 `releases/stretch-routine-motioncore-v1-local.apk`。
 - 收尾记一笔（neat-freak）：2026-09-27 TASK-020 启动画面换肤收尾——删除零引用孤儿资源 5 个（`assets/splash-icon.png`、`assets/icon.png`、`assets/android-icon-background/foreground/monochrome.png`，均为 Expo 模板默认图，全仓 grep 自证零引用；它们会被 `assetBundlePatterns: assets/**/*` 打进 APK，删后 `favicon.png`（web.favicon 引用）与品牌套 `motion-core-*` 全部保留、不动）；清理未跟踪系统垃圾 `.DS_Store`×3（根/docs/assets）与 `.expo/dev/logs/{start,export}.log`；HANDOFF 账本行数对齐真实（TASK 23 / DISPATCH 35，`check-ledger.mjs` exit 0）；`npm run typecheck` 0 错、`npm test` 36 套件/263 用例全绿；未决见 §3.4 U-2（刷新）/U-4（新增）。仅删文件+改本 HANDOFF，未 commit/push（交 TM）。
+- 收尾记一笔（neat-freak）：2026-09-27 **同批追加·U-2 用户拍板「处理」**——点名靠 README「勿留根」口径处置根目录治理布局：**删 2**（根 `Orca 通用编排者持续推进协议.md` 过期版、根 `Orca 编排治理监督者提示词.md` 重复版，`git rm`）**移 1**（根 `归位表.template.md`，`git mv -f` 去重——`docs/templates/` 本已有自 `90bd862` 起跟踪且逐字节相同的模板源，现仅留指定位置，与已填产物 `docs/templates/归位表.md` 共存）**留 1**（根 `编排者提示词.md` 按 README:23 原位不动）；全仓 grep 自证所有引用者（README/AGENTS/编排者提示词/迁移整理提示词/docs 归位表/scripts）**全部走 `docs/prompts/` 路径、零根路径引用**；更正上轮「引用悬空」误述（引用所指文件一直在 `docs/prompts/`，从未悬空）；新增 §3.4 **U-5**（`迁移整理提示词.md:13` 自相矛盾，属中央治理布局，未擅改，建议移出「铺到根」清单，留用户/中央治理定）。本轮只动 3 个根文件＋本 HANDOFF，未碰 `AGENTS.md`/两账本/业务代码/`经验一句话.md`（U-4 由 experience-recorder 并行处理）。
 
 ---
 
@@ -132,7 +133,14 @@
 ### 3.4 待人工确认（neat-freak 提出，TM 未擅改）
 
 - **U-1**：`docs/pm/PRODUCT_PLAN_V1.2.md` 里「当前机器无 JDK / 构建阻塞」等 4 处描述与现状不符（JDK17+SDK 已装、本地构建链已通）；该文件自身 `PLAN_GATE：IN_PROGRESS` 也与 HANDOFF 的 `APPROVED` 不一致。**因它是 DEV_BASELINE，改它属 Plan 变更邻域（Change C），TM 未擅改**。现状以本 HANDOFF 为准；若要改 Plan 正文，请用户拍板走 Change C。
-- **U-2**（neat-freak 2026-09-27 刷新现状）：`README.md:24-25` 要求 `Orca 通用编排者持续推进协议.md`/`Orca 编排治理监督者提示词.md` 放 `docs/prompts/`、`归位表.template.md` 放 `docs/templates/`。现状：`docs/prompts/` 已含两份 Orca 文件、`docs/templates/` 已含 `归位表.template.md`，且 `AGENTS.md:94`、`编排者提示词.md:13` 均按 `docs/prompts/` 引用——**引用已通、不再悬空**。但**根目录仍各留一份重复件**：根 `Orca 编排治理监督者提示词.md`、根 `归位表.template.md` 与 docs 内副本逐字节相同（纯重复）；根 `Orca 通用编排者持续推进协议.md`（28504B / 2026-09-13，写「9+1」）**旧于** `docs/prompts/` 版本（28518B / 2026-09-19，已更到「9+1＋1」）——即根留的是过期副本。**涉及治理布局且 AGENTS 禁改**，请用户裁定是否删除根目录这三份重复/过期件（删后引用仍指向 docs/prompts 与 docs/templates，不影响任何引用）。
+- **U-2（已处理，2026-09-27 用户拍板「处理」）**：`README.md:24-25` 要求 `Orca 通用编排者持续推进协议.md`/`Orca 编排治理监督者提示词.md` 放 `docs/prompts/`、`归位表.template.md` 放 `docs/templates/`（第 24 行并明令「勿留根」）。**最终处置＝删 2 / 移 1 / 留 1**：
+  - ① `git rm` 根 `Orca 通用编排者持续推进协议.md`（28504B / 2026-09-13 的过期十卡版；`docs/prompts/` 版 28518B / 2026-09-19 已更到「9+1＋1」，`cmp` 证两版有差异）。
+  - ② `git rm` 根 `Orca 编排治理监督者提示词.md`（与 `docs/prompts/` 版 `cmp` 逐字节相同，纯重复）。
+  - ③ 根 `归位表.template.md` 与 `docs/templates/归位表.template.md` **本已逐字节相同**（均为空模板源，且后者自提交 `90bd862` 起已被 git 跟踪）；本轮 `git mv -f` 去重，**仅保留 README 指定位置 `docs/templates/归位表.template.md`**，与已填产物 `docs/templates/归位表.md` 共存（两者内容不同、均保留）。
+  - ④ 根 `编排者提示词.md` 按 `README.md:23`「包内原位」**保留不动**。
+  - **依据**：README 口径 + `cmp` 实测 + 全仓引用者（`README.md:24`、`AGENTS.md:94/173`、`编排者提示词.md:13`、`迁移整理提示词.md:13`、`docs/templates/归位表.md:8`、`scripts/orchestration/README.md:3`）**全部按 `docs/prompts/` 路径引用，无一处按根路径引用**——删除不影响任何引用（引用指向的文件本就在 `docs/prompts/`）。
+  - **更正前一轮表述**：`AGENTS.md` 与 `编排者提示词.md` 引用的本就是 `docs/prompts/` 里一直存在的文件，**引用从未悬空**；真正多余的是根目录这两份过期/重复副本与错位的根 `归位表.template.md`。
+- **U-5**（neat-freak 2026-09-27 新提出）：根 `迁移整理提示词.md:13` 一句话内自相矛盾——既说把源包「铺到本项目根目录……归位表.template.md」，又说「把归位表.template.md 放到本项目 docs/templates/」，且与 `README.md:23-25`「文件＋落位路径成对」的口径已不一致。**该文件属中央治理布局，AGENTS 禁改、neat-freak 未擅改**。建议修法：把第 13 行铺底清单里的 `归位表.template.md` 从「铺到根」清单移出，只保留「放到 `docs/templates/`」一句，与 README:25 对齐（改母版真源后同步 `新项目模板包/`、`老项目迁移模板包/` 两包）。请用户/中央治理裁定。
 - **U-3**：`TASK-MODEL-LOG.jsonl` 无 TASK-017 行（只有 DISPATCH 行）——与「TASK-017 未收口」一致；是否补记由用户/TM 定（账本红线只校验不改）。
 - **U-4**（neat-freak 2026-09-27 新提出）：根 `经验一句话.md` 有整段重复——第 26–40 行把第 5–15 行的通用经验（含重复的 `# 经验一句话` 标题）原样再抄一遍，其后才是本项目独有经验（2026-09-18 起）。该文件自称「只追加」且归 experience-recorder 管，**neat-freak 未擅改**；是否去重请用户/TM 定（去重＝纯删除重复行，零信息损失）。既有封存件 `经验一句话.md.旧版-2026-09-27` 未动。
 
