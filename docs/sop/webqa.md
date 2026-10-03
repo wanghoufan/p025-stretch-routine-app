@@ -35,7 +35,7 @@
 ## 六、QA 输出
 
 - QA_RESULT=PASS／DEGRADED／FAIL＋对象／步骤／实际结果／失败步骤／截图日志／可复现性／是否需修复。
-- PASS 放行，FAIL 回修回归；DEGRADED＝核心可用＋非阻塞异常。
+- PASS 放行，FAIL 回修回归；DEGRADED＝仅在核心用户路径可用、且非阻塞异常已明确记录时才可。
 
 ## 七、故障分层
 

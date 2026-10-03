@@ -56,3 +56,6 @@ temp/
 
 # 设计资源原包（24MB zip，用户材料留磁盘，不进仓；已解包资产在 assets/icons 与 assets/motion-core-*）
 assets/Motion Core*.zip
+
+# ORCA 迁移备份（回滚用，勿入库）
+*.旧版-2026-09-29

@@ -112,22 +112,6 @@ Expo CNG 项目若忽略 android/，Wrapper 是否进入仓库取决于项目的
 
 EAS local 是在本机执行接近 EAS 的流程，不等同普通 Gradle。eas.json 的部分工具版本字段、缓存和 Secret 环境变量存在本地限制，执行前读取当期 Expo 官方说明。
 
-## 5.1 身份类字段的唯一真源（CNG 项目）
-
-CNG 项目里 `android/` 与 `ios/` 是 prebuild 派生件并通常被 Git 忽略。凡是能从 app config（app.json / app.config.js）派生的身份类字段，唯一真源是 app config，不是被忽略的原生文件：
-
-- `versionName` / `versionCode`、app 名、图标、启动画面（splash）、包名、权限；
-- 禁止手改 `android/app/build.gradle` 的 `versionCode` 或 `app.json` 之外的原生身份字段后直接出包。手改的改动不会进 Git、不会参与评审，并会在下一次 prebuild 被静默冲回，导致装机被系统以 `INSTALL_FAILED_VERSION_DOWNGRADE` 等理由拒绝；
-- 改了 app config 后，出包前必须先重新 prebuild（`npx expo prebuild -p android`），再走 Gradle。`npx expo run:android` 在 `android/` 已存在时不保证重跑 prebuild，会按旧的派生件打包；
-- 装机遇到版本号冲突时，改真源并重新出包。禁止用 `adb install -r -d` 降级标志绕过，禁止用 uninstall 绕过——本地优先应用的业务数据在应用私有目录，卸载即丢失。
-
-启动画面（splash）在 CNG 项目里有两个容易混淆的位置：
-
-- 顶层 `splash` 字段：只有在没有任何 config plugin 接管时才会被 prebuild 读取。若已配置 `expo-splash-screen` 插件，则**插件的 props 是唯一权威源**，顶层 `splash` 退化为给外部工具读的说明性配置；
-- `expo-splash-screen` 插件 props：真正驱动原生生成（Android `windowSplashScreenBackground` / `windowSplashScreenAnimatedIcon`、iOS 启动图）。改动原生启动画面必须改这里并重新 prebuild；
-- 只改顶层 `splash` 而无插件接管，等于什么都没改（不会报错，静默不生效）。判断依据：查 `node_modules/expo-splash-screen/plugin/build/withSplashScreen.js` 是否存在；
-- Android 12+ 走平台属性 `windowSplashScreenBackground` / `windowSplashScreenAnimatedIcon`，由 androidx core-splashscreen 的 `values-v31` 转发，不需手写 `values-v31`；
-
 ## 6. SDK、Build Tools、NDK 和 CMake
 
 JDK、Android SDK、SDK Platform、Build Tools、NDK 和 CMake 是可安装在本机、供多个项目共享的机器级组件。

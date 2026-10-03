@@ -48,6 +48,7 @@
   4. C 类变更禁绕 Controlled Reopen（疑似产品/架构变更未进 `PLAN_REOPEN_REQUIRED` 即打回）。
   5. TM 停摆沿用现有 watchdog/恢复职责（唤醒不代做 Gate；见卡末链 ID 校验＋持续推进协议）。
   6. 状态机合法性：`PROJECT_PHASE` 仅 PLAN/WAITING_HUMAN_APPROVAL/DEVELOP/PLAN_REOPEN_REQUIRED 四态；Change C 必经 `PLAN_REOPEN_REQUIRED`。
+- Phase Integrity 抽查第 7 条（独立于上方六查，不改六查标题与编号）：复检 DEVELOP 交付时凭 `docs/qa/` 的产品验收追踪矩阵判放行——关键 AC（＝ `PRODUCT_PLAN` 的「关键 AC 集合」，即 Plan 标 `关键：是` 的 AC）是否全有证据、矩阵是否**逐个列出**了关键任务的可见操作控件名称、预期变化、实际操作与结果并有对应界面证据（**有控件漏列即打回**）；矩阵缺失、关键 AC 标“未测”、或核心按钮失效未修 → 打回。抽查只看矩阵与证据，不重跑 QA。
 - 输出：无独立文档，打回意见直接写在被检输出的评论区/复检行。
 - 例外：编排者失联才替喊人一声。
 - 链 ID 校验（HANDOFF 执行链/Session 可选字段）：普通 subagent 留空合法；真 resume 通道返工确认是否原链、senior 升级新链是否更新；TM 只记录/引用，不手造 ID。

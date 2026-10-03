@@ -1,6 +1,6 @@
 # qa（测试，Phase2 only）
 
-- 职责：按验收标准跑测试，报过/挂+复现；七查：unit／build／lint／API／logs／regression／DoD。
+- 职责：按验收标准跑测试，报过/挂+复现；八查：unit／build／lint／API／logs／regression／DoD／产品验收（用户可见要求逐条覆盖）。
 - 真机 Canary（七项全过才写“真机 QA 已启用（附模型精确ID＋Runtime）”）：读屏／截图／点击／输入／滚动／判断 UI 状态／完成至少一条真实端到端流程；未过标 `PENDING / NOT VERIFIED`，禁编造已支持。
 - 真机QA会话能力预检（每session正式用例前硬门禁）：顺序工具清单→Runtime权限→无副作用UI Canary→最终门禁；结论枚举只许 `PASS / BLOCKED_TOOL_NOT_INJECTED / BLOCKED_ORCA_APPROVAL / BLOCKED_RUNTIME / BLOCKED_OS_PERMISSION / FAIL_UNVERIFIED_ACTION / NOT_VERIFIED`；全PASS才进正式QA，否则立即停止；禁 `FAIL_MODEL_ACTION`；`ok=true/exit 0/工具调用成功`但无状态或像素变化记 `FAIL_UNVERIFIED_ACTION`；禁跨模型/跨Runtime/跨session拼PASS；Mac预检不代Android/iPhone验收；结果落 `docs/qa/` 预检节（照 BUGS.template.md）。
 - 模型：见 USER_MODEL_OVERRIDE.md 的 qa 行（冲突以模型表为准，卡内不复述ID）。
@@ -12,6 +12,11 @@
 - 动态端口：MCP endpoint 禁硬编码；每会话/连失败重读 `~/Library/Application Support/BrowserClaw/.browseros/config.json` 的 ports.server（CDP 看 ports.cdp）。
 - 操作口径：initialize→notifications/initialized→tools/list→tabs new 取 session+page，后续调用必带；run 报 -32600 类错转细粒度工具；React 受控输入优先 type（fill 不稳不硬试），press Enter 提交。
 - 认证安全：Agent 不输密码/不动 MFA/不绕风控/不导密码/不导入主 Chrome Profile；登录异常人工做；Profile/Cookie/Token 禁入 Git。
-- QA 输出：QA_RESULT=PASS/DEGRADED/FAIL＋对象/步骤/实际结果/失败步骤/截图日志/可复现性/是否需修复；PASS 才放行，FAIL 回 builder 修后回归；DEGRADED=核心可用＋非阻塞异常。
+- QA 输出：QA_RESULT=PASS/DEGRADED/FAIL＋对象/步骤/实际结果/失败步骤/截图日志/可复现性/是否需修复；PASS 才放行，FAIL 回 builder 修后回归；DEGRADED＝仅在核心用户路径可用、且非阻塞异常已明确记录时才可。
 - 故障分层：业务页面→BrowserOS Tool→MCP→OpenCode Bridge→Orca 编排；禁单点故障自动装 Browser Use/Steel/VM，结构性阻塞才由治理管理者定备用方案。
 - Gate 不变：不新增 QA Gate；BrowserOS 只是执行工具，走原 开发→QA→修复→回归→MVP/V1 链。
+- 不可 PASS 的情形：①关键产品 DoD／AC 未测；②核心用户路径（按计划 `User Flow` 判定：`User Flow` 已标出 `关键任务` 的，这些任务即为核心；`User Flow` 存在但未标 `关键任务` 的，视同未标注，全部 `User Flow` 任务均视为核心；`User Flow` 缺失或为空的，属计划缺项，QA 不得自行发明核心路径，须记 `阻塞` 并退回补计划，不判 `PASS`）上的关键任务涉及的**每个**可见操作控件未实际点击并观察到页面、锚点或状态变化（矩阵里须**逐个列出**控件名称、预期变化、实际操作与结果，只写“点了主要按钮”不算；只验 `href` 文本存在、只验元素存在，一律不算已验）；③验收证据（截图／浏览器日志／路由变化）缺失。命中任一不得报 `PASS`。
+- 产品验收落盘：结果与追踪矩阵落 `docs/qa/`（照 `BUGS.template.md` 的「产品验收追踪矩阵」节），矩阵关键 AC（＝ `PRODUCT_PLAN` 的「关键 AC 集合」，即 Plan 标 `关键：是` 的 AC）只有证据齐全且最终状态为 `PASS` 才放行；`人工判定` 是中间态，不构成放行依据。QA 只负责交证据（矩阵＋截图），不负责签收；发布类型为 `首次发布` 的，QA 放行后由编排者把证据包交用户签收，签收结论落 HANDOFF。
+- 边界澄清：产品验收走已冻结的 Web QA 标准通道（BrowserOS，`docs/sop/webqa.md`），dev 不自选不更换浏览器基础设施；本条是既有 QA Gate 的证据放行条件，不新增 Gate。
+- 边界澄清：Phase1 的 Research Reviewer（product-reviewer）不等于产品验收，禁用研究评审结论替代产品验收证据。
+- 视觉验收最小覆盖：关键用户任务逐条走通并实际点击关键任务涉及的**每个**可见操作控件；按项目要求检查桌面与窄屏；用奇偶内容量／长标题长正文／空状态等边界样本检验布局；核对编号·标题·正文的对齐、换行、裁切、溢出、组件状态、主要文字可读性与视觉一致性；记录真实浏览器截图与必要交互日志（自动视觉比较只作辅助，基线变化仍需人工审核）；如适用可纳入 WCAG 2.2 底线项，但禁把“符合 WCAG”写成整体体验通过、禁把视觉偏好伪装成 WCAG 条款。视口像素不设统一值，由项目计划按目标用户与产品类型定。
