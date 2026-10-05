@@ -1,5 +1,7 @@
 # 拉伸语音播报 App（真实工程说明）｜以下为 ORCA 新项目模板包原文（仅治理脚手架，业务代码见 App.tsx / src/ / app.json / eas.json，开发基线 SDD-V1.0 见 docs/plan/，当前进展与挂账见 docs/handoff/HANDOFF.md）
 
+[English](./README.en.md)
+
 # ORCA 新项目模板包
 
 ## 用途
