@@ -1,49 +1,50 @@
-# Stretching Voice-Broadcast App — Real Engineering Notes
+# Stretching Voice-Broadcast App
+
+Stretch without staring at your phone counting seconds: the app reads each move and the beat out loud, so you just follow the voice until the routine is done. Phone in your pocket, eyes on the mirror.
 
 [简体中文](./README.md) | English
 
-> Read this first: this README documents only the governance scaffolding — the ORCA new-project template package reproduced below. It is **not** a description of completed app features. The real business code of this project lives in `App.tsx`, `src/`, `app.json`, and `eas.json`; the development baseline SDD-V1.0 is in `docs/plan/`; current progress and open (deferred) items are recorded in `docs/handoff/HANDOFF.md`.
+<p>
+  <img src="./docs/screenshots/home-my-routines.png" alt="Home: my routines" width="200" />
+  <img src="./docs/screenshots/action-library.png" alt="Exercise library with body-part filters" width="200" />
+  <img src="./docs/screenshots/settings.png" alt="Settings: language and voice options" width="200" />
+</p>
 
-## ORCA new-project template package
+## What you can do
 
-### Purpose
+- **Follow by ear**: each move is announced — seconds left, switch sides, next exercise — no screen needed.
+- **A built-in exercise library**: filter by body part and assemble a routine right away.
+- **Your own routines**: create one by picking and ordering moves; common presets ship with it (morning full body, post-run legs, office desk recovery, before bed).
+- **Loops and speed control**: run a sequence repeatedly, faster or slower.
+- **Background audio**: layer ambient sound under the voice.
+- **History**: keeps track of which routines you did and how often.
 
-Used to initialize new projects. This package only provides ORCA's run entry points and templates; it contains no business code from any older project.
+## Who it's for
 
-### Usage: placing the files in the project root
+Anyone who stretches but hates "phone in one hand, counting seconds"; runners and gym-goers cooling down; office workers sneaking a routine between meetings.
 
-```text
-AGENTS.md                 → the root AGENTS.md of the ORCA distribution
-USER_MODEL_OVERRIDE.md    → a symlink pointing to USER_MODEL_OVERRIDE.md at the ORCA distribution root (do not copy the real file; editing the master version syncs all projects; if the link breaks across machines, copy the real file and record it in HANDOFF)
-docs/roles/               → docs/roles/ of the ORCA distribution
-docs/pm/                  → docs/pm/ of the ORCA distribution
-docs/handoff/             → docs/handoff/ of the ORCA distribution
-docs/model/               → docs/model/ of the ORCA distribution
-docs/qa/                  → docs/qa/ of the ORCA distribution
-docs/review/              → docs/review/ of the ORCA distribution
-docs/sop/                 → docs/sop/ of the ORCA distribution (docker.md, supabase.md, sqlite.md, referenced without version numbers)
-经验一句话.md             → the root 经验一句话.md ("one-line lesson") of the ORCA distribution
-GOVERNANCE_VERSION                   → project root (the package already includes the original text)
-外部开发者提示词.md / 编排者提示词.md → project root (kept at their original location inside the package)
-Orca 通用编排者持续推进协议.md / Orca 编排治理监督者提示词.md → project docs/prompts/ (AGENTS and the orchestrator prompt reference them at this path; do not leave them in the root)
-归位表.template.md                   → project docs/templates/ (original location inside the package)
-docs/model/DISPATCH-LOG.jsonl        → project docs/model/ (the package ships a sample line; delete it before the first dispatch)
-docs/pm/PRODUCT_PLAN.template.md     → project docs/pm/ (Phase 1 only, the Readiness canon)
-docs/review/RESEARCH_REVIEW.template.md → project docs/review/ (Phase 1 only; the internal ID product-reviewer stays unchanged; newly added)
-scripts/orchestration/               → project scripts/orchestration/ (optional: deploy the L3 watchdog only when the Orca terminal / external channel orchestrates long tasks; see its README for the deployment method)
+## Quick start
+
+Requires Node and an Android environment (device or emulator).
+
+```bash
+npm install
+npx expo start        # development
+npm run android       # build and install on an Android device
+npm run test          # run the tests
+npm run typecheck     # type checking
 ```
 
-This package already contains the verbatim text of directly usable files; after copying into a new project it does not depend on paths in the source repository. Project run records (HANDOFF, the task ledger, QA, and Review) must live locally in the project.
+Everything is stored on the device: no account, no login, works offline.
 
-### What must not be copied
+## Where it stands
 
-- The Git history of the ORCA distribution;
-- HANDOFF, BUG, Review, or real data from other projects;
-- Archived files of older versions.
+- Version **1.2.0** (`app.json`).
+- Primarily **Android**; development is paused at a milestone — see `docs/handoff/HANDOFF.md`.
+- Known open items: Android foreground service, Doze power-saving behaviour and per-version adaptation are not scheduled yet.
 
-### After initialization
+## Read more
 
-1. Confirm `AGENTS.md` and `USER_MODEL_OVERRIDE.md` have been placed in the project root.
-2. Create the project-local `docs/model/TASK-MODEL-LOG.jsonl`.
-3. Create the project's `docs/handoff/HANDOFF.md`.
-4. Only then start the first task.
+- Stack: Expo 57 + React Native, `expo-speech` for the voice, `expo-audio` for background sound, `expo-sqlite` for local data.
+- Plans and acceptance records: `docs/plan/`, `docs/qa/`, `docs/handoff/`.
+- Governance scaffolding shipped with this repo (unrelated to the app): `docs/ORCA-模板包原文.md`.

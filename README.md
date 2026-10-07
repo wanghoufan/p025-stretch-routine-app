@@ -1,47 +1,50 @@
-# 拉伸语音播报 App（真实工程说明）｜以下为 ORCA 新项目模板包原文（仅治理脚手架，业务代码见 App.tsx / src/ / app.json / eas.json，开发基线 SDD-V1.0 见 docs/plan/，当前进展与挂账见 docs/handoff/HANDOFF.md）
+# 拉伸语音播报 App
 
-[English](./README.en.md)
+做拉伸不用盯屏幕数秒：动作和节拍靠语音念给你听，跟着念完就练完。手机揣兜里、眼睛看着镜子也能做完整段。
 
-# ORCA 新项目模板包
+简体中文 | [English](./README.en.md)
 
-## 用途
+<p>
+  <img src="./docs/screenshots/home-my-routines.png" alt="首页：我的流程" width="200" />
+  <img src="./docs/screenshots/action-library.png" alt="动作库：内置动作与部位筛选" width="200" />
+  <img src="./docs/screenshots/settings.png" alt="设置页：语言与语音播报选项" width="200" />
+</p>
 
-用于新项目初始化。该包只提供 ORCA 的运行入口和模板，不包含任何旧项目业务代码。
+## 它能做什么
 
-## 放入项目根目录（文件位置）
+- **念着做**：每个动作到点播报（还有几秒、换边、下一个动作），不用看屏幕。
+- **自带一套动作**：内置动作库，按部位筛选，直接拼成流程就能开始。
+- **流程自己定**：新建流程挑动作、排顺序；也预置了晨起全身、跑后下肢、办公室久坐、睡前放松等常见流程。
+- **能循环、能变速**：一段接一段跑完，节奏可快可慢。
+- **有背景音**：语音播报之外可以叠一层背景音。
+- **练过的有记录**：历史统计留着你做过哪些流程、多少次。
 
-```text
-AGENTS.md                 → ORCA 分发版根目录 AGENTS.md
-USER_MODEL_OVERRIDE.md    → 软链指 ORCA 分发版根目录 USER_MODEL_OVERRIDE.md（禁拷实文件；改母版全项目同步；跨机器断链时拷实文件并记 HANDOFF）
-docs/roles/               → ORCA 分发版 docs/roles/
-docs/pm/                  → ORCA 分发版 docs/pm/
-docs/handoff/             → ORCA 分发版 docs/handoff/
-docs/model/               → ORCA 分发版 docs/model/
-docs/qa/                  → ORCA 分发版 docs/qa/
-docs/review/              → ORCA 分发版 docs/review/
-docs/sop/                 → ORCA 分发版 docs/sop/（docker.md、supabase.md、sqlite.md，去版本号引用）
-经验一句话.md             → ORCA 分发版根目录 经验一句话.md
-GOVERNANCE_VERSION                   → 项目根（包内已含原文）
-外部开发者提示词.md / 编排者提示词.md → 项目根（包内原位）
-Orca 通用编排者持续推进协议.md / Orca 编排治理监督者提示词.md → 项目 docs/prompts/（AGENTS 与编排者提示词按此路径引用，勿留根）
-归位表.template.md                   → 项目 docs/templates/（包内原位）
-docs/model/DISPATCH-LOG.jsonl        → 项目 docs/model/（包内已含示例行，首派前删除）
-docs/pm/PRODUCT_PLAN.template.md     → 项目 docs/pm/（Phase1专用，Readiness正典）
-docs/review/RESEARCH_REVIEW.template.md → 项目 docs/review/（Phase1专用，内部ID product-reviewer不变，新增）
-scripts/orchestration/               → 项目 scripts/orchestration/（可选：仅 Orca 终端/外部通道编排长任务时部署 L3 watchdog，部署法见其 README）
+## 适合谁
+
+每天要拉伸但嫌「一边看手机一边数秒」麻烦的人；跑步、健身后要放松的人；办公室久坐想偷偷做一组的人。
+
+## 快速开始
+
+需要 Node 与 Android 环境（真机或模拟器）。
+
+```bash
+npm install
+npx expo start        # 开发调试
+npm run android       # 构建并装到安卓设备
+npm run test          # 跑测试
+npm run typecheck     # 类型检查
 ```
 
-本包已包含可直接运行的文件原文，拷贝到新项目后不依赖源仓库路径。项目运行记录（HANDOFF、任务账本、QA 和 Review）必须落在项目本地。
+数据存在手机本地，没有账号、不需要登录、不联网也能用。
 
-## 不应复制
+## 现在到哪一步了
 
-- ORCA 分发版的 Git 历史；
-- 其他项目的 HANDOFF、BUG、Review 和真实数据；
-- 旧版本封存文件。
+- 版本号 **1.2.0**（`app.json`）。
+- 主要面向**安卓**；开发已阶段性收工，进度与挂账见 `docs/handoff/HANDOFF.md`。
+- 已知待办：安卓前台服务、省电模式（Doze）与不同安卓版本的适配还没排期。
 
-## 初始化后
+## 想看更多
 
-1. 确认 `AGENTS.md` 和 `USER_MODEL_OVERRIDE.md` 已拷入项目根。
-2. 建立项目本地 `docs/model/TASK-MODEL-LOG.jsonl`。
-3. 创建项目 `docs/handoff/HANDOFF.md`。
-4. 再开始第一项任务。
+- 技术栈：Expo 57 + React Native，语音用 `expo-speech`，背景音用 `expo-audio`，本地数据用 `expo-sqlite`。
+- 开发计划与验收记录：`docs/plan/`、`docs/qa/`、`docs/handoff/`。
+- 本项目附带的治理脚手架说明（与 App 功能无关）：`docs/ORCA-模板包原文.md`。
