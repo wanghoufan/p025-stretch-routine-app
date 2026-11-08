@@ -4,6 +4,8 @@ Finish a stretch routine by following voice cues: each movement announces its na
 
 [简体中文](./README.md) · [Android APK (PGYER)](https://www.pgyer.com/lashenyuyinbobao)
 
+![Stretch Voice Coach home screen](docs/images/home.png)
+
 ## What it is
 
 An offline stretch coach for Android. It turns a sequence of movements into a routine, announces each one on cue, and speaks up for side changes, rests, and the finish; the screen only shows the current movement and remaining time, so you do not have to keep watching.

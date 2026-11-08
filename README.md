@@ -4,6 +4,8 @@
 
 [English](./README.en.md) · [安卓安装包（蒲公英）](https://www.pgyer.com/lashenyuyinbobao)
 
+![拉伸语音播报 App 首页的流程列表](docs/images/home.png)
+
 ## 这是什么
 
 一个在 Android 手机上离线运行的拉伸语音教练。它把一串动作编成流程，按节拍逐个播报，到了换边、休息、结束都会出声提醒；屏幕只显示当前动作和剩余时间，不需要一直盯着。
