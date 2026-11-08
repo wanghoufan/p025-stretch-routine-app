@@ -1,50 +1,61 @@
-# Stretching Voice-Broadcast App
+# Stretch Voice Coach
 
-Stretch without staring at your phone counting seconds: the app reads each move and the beat out loud, so you just follow the voice until the routine is done. Phone in your pocket, eyes on the mirror.
+Finish a stretch routine by following voice cues: each movement announces its name, key points, and side changes, so your hands stay off the phone—and afterwards you can see how long you have practiced by routine type.
 
-[简体中文](./README.md) | English
+[简体中文](./README.md) · [Android APK (PGYER)](https://www.pgyer.com/lashenyuyinbobao)
 
-<p>
-  <img src="./docs/screenshots/home-my-routines.png" alt="Home: my routines" width="200" />
-  <img src="./docs/screenshots/action-library.png" alt="Exercise library with body-part filters" width="200" />
-  <img src="./docs/screenshots/settings.png" alt="Settings: language and voice options" width="200" />
-</p>
+## What it is
 
-## What you can do
+An offline stretch coach for Android. It turns a sequence of movements into a routine, announces each one on cue, and speaks up for side changes, rests, and the finish; the screen only shows the current movement and remaining time, so you do not have to keep watching.
 
-- **Follow by ear**: each move is announced — seconds left, switch sides, next exercise — no screen needed.
-- **A built-in exercise library**: filter by body part and assemble a routine right away.
-- **Your own routines**: create one by picking and ordering moves; common presets ship with it (morning full body, post-run legs, office desk recovery, before bed).
-- **Loops and speed control**: run a sequence repeatedly, faster or slower.
-- **Background audio**: layer ambient sound under the voice.
-- **History**: keeps track of which routines you did and how often.
+Voice lines are pre-generated local audio, so playback continues on the lock screen and in the background. No network, no login, no practice data uploaded.
 
-## Who it's for
+## What it does
 
-Anyone who stretches but hates "phone in one hand, counting seconds"; runners and gym-goers cooling down; office workers sneaking a routine between meetings.
+- **Offline voice routines**: each movement announces its name, key points, and side change from a bundled audio pack, with no system TTS or network dependency.
+- **Movement library and routine building**: organize movements by training type (stretch, warm-up, core) and build your own routines.
+- **Side change and rest cues**: unilateral movements prompt a side change on time, rests count down, and the next segment starts automatically.
+- **Foreground service keep-alive**: keeps playing on the lock screen and in the background, with pause/resume/stop in the notification.
+- **History stats**: only practice time with a trustworthy clock source is recorded, aggregated by training type with the latest 10 entries; entries can be deleted individually or cleared.
+- **Chinese and English UI**: follows the system language on first launch, switchable in settings, and the choice survives restarts.
+- **No account, no network**: data lives only in local SQLite.
 
-## Quick start
+## Install and run
 
-Requires Node and an Android environment (device or emulator).
+On a real phone: download the latest APK from [PGYER](https://www.pgyer.com/lashenyuyinbobao) and install over the existing app to keep data.
+
+From source (Node.js 20+ and Android Studio):
 
 ```bash
 npm install
-npx expo start        # development
-npm run android       # build and install on an Android device
-npm run test          # run the tests
-npm run typecheck     # type checking
+npm test              # jest unit tests
+npm run typecheck
+npx expo run:android  # build and install on a connected device
 ```
 
-Everything is stored on the device: no account, no login, works offline.
+Release builds use a fixed signing key; upgrade in place and do not uninstall.
 
-## Where it stands
+## Data and privacy
 
-- Version **1.2.0** (`app.json`).
-- Primarily **Android**; development is paused at a milestone — see `docs/handoff/HANDOFF.md`.
-- Known open items: Android foreground service, Doze power-saving behaviour and per-version adaptation are not scheduled yet.
+- Practice records stay on-device and are deleted on uninstall; there is no cloud sync or account system.
+- Audio assets ship with the app, and playback makes no network requests.
+- The repository and docs contain no real user practice data.
 
-## Read more
+## Known limitations
 
-- Stack: Expo 57 + React Native, `expo-speech` for the voice, `expo-audio` for background sound, `expo-sqlite` for local data.
-- Plans and acceptance records: `docs/plan/`, `docs/qa/`, `docs/handoff/`.
-- Governance scaffolding shipped with this repo (unrelated to the app): `docs/ORCA-模板包原文.md`.
+- History starts counting only after stats are enabled; older versions had no history table, so past sessions cannot be recovered.
+- A session that ends abnormally (for example, force-killed) may not be counted; the UI explains this.
+- Only the Android line is maintained.
+
+## Layout
+
+```text
+app/         # screens and navigation
+features/    # routines, playback, history stats
+domain/      # movements, routines, timing model
+services/    # voice, foreground service, notifications
+assets/audio # pre-generated voice and cue sounds
+docs/        # plans, QA, handoff, governance
+```
+
+See `docs/pm/PRODUCT_PLAN_V1.3.md` for scope and `CHANGELOG.md` for changes.
