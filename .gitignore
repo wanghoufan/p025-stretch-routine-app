@@ -54,6 +54,9 @@ releases/
 # 本地临时文件夹（对外转发用的提示词/草稿等一次性文件，不进仓）
 temp/
 
+# 本机凭据与一次性验证产物（PWA 语音验证页、证书、临时日志），不进仓
+.local/
+
 # 设计资源原包（24MB zip，用户材料留磁盘，不进仓；已解包资产在 assets/icons 与 assets/motion-core-*）
 assets/Motion Core*.zip
 

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#041B3D">
+  <title>语音试听 · Voice samples</title>
+  <style>
+    :root { color-scheme: dark; --bg:#041B3D; --surface:#0D274A; --border:#1B5B91; --text:#fff; --muted:#9BB3D1; --primary:#00E5FF; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif; font-size:19px; line-height:1.5; overflow-wrap:anywhere; }
+    main { max-width:430px; margin:0 auto; padding:20px 16px calc(36px + env(safe-area-inset-bottom)); }
+    h1 { font-size:28px; line-height:1.25; margin:0 0 6px; }
+    h2 { font-size:23px; line-height:1.3; margin:28px 0 10px; }
+    p { margin:8px 0; }
+    .muted { color:var(--muted); font-size:15px; line-height:1.55; }
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px; margin:12px 0; }
+    .row { margin:10px 0; }
+    .name { font-size:19px; margin-bottom:6px; }
+    .tag { color:var(--muted); font-size:15px; }
+    button { width:100%; min-height:56px; padding:12px 16px; border-radius:14px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-family:inherit; font-size:19px; text-align:left; }
+    button.playing { border-color:var(--primary); background:#0C3D63; }
+    button.stop { border-color:#FF6B6B; color:#FF6B6B; background:transparent; margin-top:20px; }
+    .state { color:var(--primary); font-size:15px; margin-top:4px; min-height:24px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>语音试听</h1>
+  <p class="muted">微软神经语音，用来替换原来机械的 Tingting / Samantha。点一行听一行；选定后我会把整套 46 句重新生成并打包离线。</p>
+
+  <h2>中文</h2>
+  <div class="card">
+    <div class="row"><div class="name">晓晓 <span class="tag">女 · 自然、温和</span></div><button data-src="./voice-samples/zh-xiaoxiao.mp3">播放晓晓</button><div class="state"></div></div>
+    <div class="row"><div class="name">晓伊 <span class="tag">女 · 年轻、轻快</span></div><button data-src="./voice-samples/zh-xiaoyi.mp3">播放晓伊</button><div class="state"></div></div>
+    <div class="row"><div class="name">云希 <span class="tag">男 · 年轻、清亮</span></div><button data-src="./voice-samples/zh-yunxi.mp3">播放云希</button><div class="state"></div></div>
+    <div class="row"><div class="name">云健 <span class="tag">男 · 沉稳、有力</span></div><button data-src="./voice-samples/zh-yunjian.mp3">播放云健</button><div class="state"></div></div>
+  </div>
+
+  <h2>English</h2>
+  <div class="card">
+    <div class="row"><div class="name">Aria <span class="tag">female · warm and natural</span></div><button data-src="./voice-samples/en-aria.mp3">Play Aria</button><div class="state"></div></div>
+    <div class="row"><div class="name">Jenny <span class="tag">female · clear and friendly</span></div><button data-src="./voice-samples/en-jenny.mp3">Play Jenny</button><div class="state"></div></div>
+    <div class="row"><div class="name">Guy <span class="tag">male · calm and steady</span></div><button data-src="./voice-samples/en-guy.mp3">Play Guy</button><div class="state"></div></div>
+    <div class="row"><div class="name">Andrew <span class="tag">male · conversational</span></div><button data-src="./voice-samples/en-andrew.mp3">Play Andrew</button><div class="state"></div></div>
+  </div>
+
+  <button class="stop" id="stop">停止播放</button>
+  <p class="muted">这些是试听文件，不会进入正式应用；正式应用仍只读取本机打包音频，不联网。</p>
+</main>
+<script>
+  var current = null;
+  var currentBtn = null;
+  var currentState = null;
+  function stopAll() {
+    if (current) { current.pause(); current.currentTime = 0; current = null; }
+    if (currentBtn) { currentBtn.classList.remove('playing'); currentBtn = null; }
+    if (currentState) { currentState.textContent = ''; currentState = null; }
+  }
+  document.querySelectorAll('button[data-src]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      stopAll();
+      var audio = new Audio(btn.dataset.src);
+      var state = btn.parentElement.querySelector('.state');
+      current = audio;
+      currentBtn = btn;
+      currentState = state;
+      btn.classList.add('playing');
+      state.textContent = '播放中…';
+      audio.onended = function () { state.textContent = '播放结束'; btn.classList.remove('playing'); };
+      audio.onerror = function () { state.textContent = '播放失败，请再点一次'; btn.classList.remove('playing'); };
+      audio.play().catch(function () { state.textContent = '被浏览器拦截，请再点一次'; });
+    });
+  });
+  document.getElementById('stop').addEventListener('click', stopAll);
+</script>
+</body>
+</html>
