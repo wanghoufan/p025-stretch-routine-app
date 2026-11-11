@@ -35,7 +35,7 @@
 - P0-5 native hardening（R004 起）未开工，建议单开 Wave。
 - TASK-017 背景音试听按钮：已实现未收口，挂起。
 - 版本台账中包路径仍指向旧目录 `/Users/zzymima0000/Developer/coding/1.Active/...`，与现路径 `/Volumes/项目归档/...` 不一致，待下次登记时纠正（`docs/risks.md` R3）。
-- 本轮复盘产物未提交：仓库 `git status` 含 `M .gitignore`、`?? web/`、`?? VERSION.md`、`?? docs/retrospective/`；按项目规矩 commit/push 需用户明确指令，**本次未提交**。
+- 本轮复盘产物已提交并推 main：`addf965`（含 `web/` 首次入仓）；仅 `.trae-html-share-packages/` 仍未跟踪（工具产物，不属项目）。
 - 待用户回复：自动化候选 A1、skill 候选 S1（见本轮复盘对话）。
 - 治理门禁存量红（非本轮引入，`node scripts/model/check-ledger.mjs docs/model` 可复现）：两账 result 漂移 8 处、`docs/qa/产品验收追踪矩阵.md` 缺失导致 `ACCEPTED-BLOCK`、`PRODUCT_PLAN_V1.3` 缺「APP 基础能力声明」（`APP-BASELINE-MISSING`）。
 
